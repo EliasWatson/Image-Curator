@@ -1,19 +1,34 @@
 module ImageCurator exposing (main)
 
 import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
+
 import Http
+
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, name, src, title, type_, placeholder, value, checked)
 import Html.Events exposing (onClick, onInput)
-import Array exposing (Array, get)
+
+import Array exposing (Array)
+
 import Json.Decode exposing (Decoder, int, array, string, bool, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
+
+import Canvas exposing (rect, shapes, texture)
+import Canvas.Texture as Texture exposing (Texture)
+import Canvas.Settings exposing (fill)
+import Canvas.Settings.Advanced exposing (rotate, transform, translate, scale)
+import Color
 
 apiUrl : String
 apiUrl = "http://192.168.0.152:8080"
 
+canvasSize : number
+canvasSize = 768
+
 type Msg
     = GotImages (Result Http.Error (Array Image))
+    | GotTexture (Maybe Texture)
     | UpdatedDatabase (Result Http.Error ())
     | SetCurrentImageStr String
     | PrevImage
@@ -22,10 +37,11 @@ type Msg
     | SetCropLeft String
     | SetCropTop String
     | SetCropSize String
+    | AnimationFrame Float
 
-type Status
+type Load a
     = Loading
-    | Loaded (Array Image)
+    | Loaded a
     | Errored String
 
 type alias Image =
@@ -37,8 +53,10 @@ type alias Image =
     }
 
 type alias Model =
-    { status : Status
+    { status : Load (Array Image)
     , currentImageIndex : Int
+    , currentTexture : Load Texture
+    , currentTextureSource : Texture.Source Msg
     }
 
 view : Model -> Html Msg
@@ -108,7 +126,42 @@ viewImageViewer model =
     let
         currentImage = getCurrentImage model
     in
-    div [ class "image-viewer" ] [ img [ src (apiUrl ++ "/get_image/" ++ currentImage.filename) ] [] ]
+    div [ class "image-viewer" ]
+        [ Canvas.toHtmlWith
+            { width = canvasSize
+            , height = canvasSize
+            , textures = [ model.currentTextureSource ]
+            }
+            []
+            [ canvasClearScreen
+            , canvasRender model
+            ]
+        ]
+
+canvasClearScreen : Canvas.Renderable
+canvasClearScreen =
+    shapes [ fill Color.white ] [ rect ( 0, 0 ) canvasSize canvasSize ]
+
+canvasRender : Model -> Canvas.Renderable
+canvasRender model =
+    case model.currentTexture of
+        Loaded texture_ ->
+            let
+                dimensions = Texture.dimensions texture_
+                scale_ = canvasSize / (max dimensions.width dimensions.height)
+                leftShift = (canvasSize - (dimensions.width * scale_)) / 2
+                topShift = (canvasSize - (dimensions.height * scale_)) / 2
+            in
+                texture
+                    [ transform
+                        [ translate leftShift topShift
+                        , scale scale_ scale_
+                        ]
+                    ]
+                    ( 0, 0 )
+                    texture_
+        Loading -> shapes [] []
+        Errored _ -> shapes [] []
 
 viewButton : List String -> Msg -> Html Msg -> Html Msg
 viewButton classes msg content =
@@ -129,19 +182,45 @@ update msg model =
         currentImage = getCurrentImage model
     in
     case msg of
-        GotImages (Ok images) -> ( { model | status = Loaded images }, Cmd.none )
-        GotImages (Err _) -> ( { model | status = Errored "Failed to load images" }, Cmd.none )
+        GotImages (Ok images) ->
+            (   { model
+                | status = Loaded images
+                , currentTextureSource = Texture.loadFromImageUrl
+                    ( apiUrl
+                    ++ "/get_image/"
+                    ++ (Maybe.withDefault emptyImage <| Array.get 0 images).filename
+                    )
+                    GotTexture
+                }
+            , Cmd.none
+            )
+        GotImages (Err _) ->
+            (   { model
+                | status = Errored "Failed to load images"
+                , currentTextureSource = Texture.loadFromImageUrl
+                    "img/error.png"
+                    GotTexture
+                }
+            , Cmd.none
+            )
+        GotTexture Nothing -> ( { model | currentTexture = Errored "Failed to load texture" }, Cmd.none )
+        GotTexture (Just texture) -> ( { model | currentTexture = Loaded texture }, Cmd.none )
         UpdatedDatabase _ -> ( model, Cmd.none )
         SetCurrentImageStr indexString ->
             ( updateCurrentImage
                 model
-                ((Maybe.withDefault (model.currentImageIndex + 1) (String.toInt indexString)) - 1)
+                ((Maybe.withDefault
+                    (model.currentImageIndex + 1)
+                    (String.toInt indexString)) - 1
+                )
             , Cmd.none
             )
         PrevImage -> ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
         NextImage -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
         ToggleApproved ->
-            ( updateCurrentImageProperties model { currentImage | approved = not currentImage.approved }
+            ( updateCurrentImageProperties
+                model
+                { currentImage | approved = not currentImage.approved }
             , Http.get
                 { url = apiUrl
                     ++ "/set_image_approved/"
@@ -166,6 +245,7 @@ update msg model =
                 newImage = { currentImage | crop_size = (Maybe.withDefault currentImage.crop_size (String.toInt numString)) }
             in
             ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
+        AnimationFrame dt -> ( model, Cmd.none )
 
 databaseUpdateCrop : Image -> Cmd Msg
 databaseUpdateCrop image =
@@ -188,16 +268,28 @@ imageDecoder =
         |> required "crop_top" int
         |> required "crop_size" int
 
+updateCurrentTextureSource : Model -> Model
+updateCurrentTextureSource model =
+    { model
+    | currentTextureSource = Texture.loadFromImageUrl
+        ( apiUrl
+        ++ "/get_image/"
+        ++ (getCurrentImage model).filename
+        )
+        GotTexture
+    }
+
 updateCurrentImage : Model -> Int -> Model
 updateCurrentImage model index =
     case model.status of
         Loaded images ->
-            { model
-            | currentImageIndex =
-                if Array.isEmpty images
-                then 0
-                else clamp 0 ((Array.length images) - 1) index
-            }
+            updateCurrentTextureSource
+                { model
+                | currentImageIndex =
+                    if Array.isEmpty images
+                    then 0
+                    else clamp 0 ((Array.length images) - 1) index
+                }
         Loading -> model
         Errored _ -> model
 
@@ -233,6 +325,8 @@ initialModel : Model
 initialModel =
     { status = Loading
     , currentImageIndex = 0
+    , currentTexture = Loading
+    , currentTextureSource = Texture.loadFromImageUrl "img/loading.png" GotTexture
     }
 
 initialCmd : Cmd Msg
@@ -248,5 +342,5 @@ main =
         { init = \_ -> ( initialModel, initialCmd )
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \model -> onAnimationFrameDelta AnimationFrame
         }
