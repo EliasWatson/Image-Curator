@@ -1,14 +1,21 @@
 module ImageCurator exposing (main)
 
 import Browser
+import Http
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, classList, id, name, src, title, type_, placeholder, value, checked)
 import Html.Events exposing (onClick, onInput)
-import Array exposing (Array)
-import Array exposing (get)
+import Array exposing (Array, get)
+import Json.Decode exposing (Decoder, int, array, string, bool, succeed)
+import Json.Decode.Pipeline exposing (optional, required)
+
+apiUrl : String
+apiUrl = "http://192.168.0.152:8080"
 
 type Msg
-    = SetCurrentImageStr String
+    = GotImages (Result Http.Error (Array Image))
+    | UpdatedDatabase (Result Http.Error ())
+    | SetCurrentImageStr String
     | PrevImage
     | NextImage
     | ToggleApproved
@@ -16,20 +23,21 @@ type Msg
     | SetCropTop String
     | SetCropSize String
 
-type alias CropRegion =
-    { top : Int
-    , left : Int
-    , size : Int
-    }
+type Status
+    = Loading
+    | Loaded (Array Image)
+    | Errored String
 
 type alias Image =
     { filename : String
     , approved : Bool
-    , crop : CropRegion
+    , crop_left : Int
+    , crop_top : Int
+    , crop_size : Int
     }
 
 type alias Model =
-    { images : Array Image
+    { status : Status
     , currentImageIndex : Int
     }
 
@@ -72,7 +80,7 @@ viewProperties model =
                 [ td [] [ text "Crop Left" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop.left)
+                    , value (String.fromInt currentImage.crop_left)
                     , onInput SetCropLeft
                     ] [] ]
                 ]
@@ -80,7 +88,7 @@ viewProperties model =
                 [ td [] [ text "Crop Top" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop.top)
+                    , value (String.fromInt currentImage.crop_top)
                     , onInput SetCropTop
                     ] [] ]
                 ]
@@ -88,7 +96,7 @@ viewProperties model =
                 [ td [] [ text "Crop Size" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop.size)
+                    , value (String.fromInt currentImage.crop_size)
                     , onInput SetCropSize
                     ] [] ]
                 ]
@@ -100,9 +108,7 @@ viewImageViewer model =
     let
         currentImage = getCurrentImage model
     in
-    div [ class "image-viewer" ]
-        [ img [ src currentImage.filename ] []
-        ]
+    div [ class "image-viewer" ] [ img [ src (apiUrl ++ "/get_image/" ++ currentImage.filename) ] [] ]
 
 viewButton : List String -> Msg -> Html Msg -> Html Msg
 viewButton classes msg content =
@@ -121,9 +127,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         currentImage = getCurrentImage model
-        currentCrop = currentImage.crop
     in
     case msg of
+        GotImages (Ok images) -> ( { model | status = Loaded images }, Cmd.none )
+        GotImages (Err _) -> ( { model | status = Errored "Failed to load images" }, Cmd.none )
+        UpdatedDatabase _ -> ( model, Cmd.none )
         SetCurrentImageStr indexString ->
             ( updateCurrentImage
                 model
@@ -134,68 +142,110 @@ update msg model =
         NextImage -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
         ToggleApproved ->
             ( updateCurrentImageProperties model { currentImage | approved = not currentImage.approved }
-            , Cmd.none
+            , Http.get
+                { url = apiUrl
+                    ++ "/set_image_approved/"
+                    ++ currentImage.filename
+                    ++ "/"
+                    ++ (if currentImage.approved then "false" else "true")
+                , expect = Http.expectWhatever UpdatedDatabase
+                }
             )
         SetCropLeft numString ->
-            ( updateCurrentImageProperties
-                model
-                { currentImage | crop =
-                    { currentCrop
-                    | left = (Maybe.withDefault currentCrop.left (String.toInt numString)) }
-                    }
-            , Cmd.none
-            )
+            let
+                newImage = { currentImage | crop_left = (Maybe.withDefault currentImage.crop_left (String.toInt numString)) }
+            in
+            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
         SetCropTop numString ->
-            ( updateCurrentImageProperties
-                model
-                { currentImage | crop =
-                    { currentCrop
-                    | top = (Maybe.withDefault currentCrop.top (String.toInt numString)) }
-                    }
-            , Cmd.none
-            )
+            let
+                newImage = { currentImage | crop_top = (Maybe.withDefault currentImage.crop_top (String.toInt numString)) }
+            in
+            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
         SetCropSize numString ->
-            ( updateCurrentImageProperties
-                model
-                { currentImage | crop =
-                    { currentCrop
-                    | size = (Maybe.withDefault currentCrop.size (String.toInt numString)) }
-                    }
-            , Cmd.none
-            )
+            let
+                newImage = { currentImage | crop_size = (Maybe.withDefault currentImage.crop_size (String.toInt numString)) }
+            in
+            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
+
+databaseUpdateCrop : Image -> Cmd Msg
+databaseUpdateCrop image =
+    Http.get
+        { url = apiUrl
+            ++ "/set_image_crop/"
+            ++ image.filename
+            ++ "/" ++ (String.fromInt image.crop_left)
+            ++ "/" ++ (String.fromInt image.crop_top)
+            ++ "/" ++ (String.fromInt image.crop_size)
+        , expect = Http.expectWhatever UpdatedDatabase
+        }
+
+imageDecoder : Decoder Image
+imageDecoder =
+    succeed Image
+        |> required "filename" string
+        |> required "activated" bool
+        |> required "crop_left" int
+        |> required "crop_top" int
+        |> required "crop_size" int
 
 updateCurrentImage : Model -> Int -> Model
 updateCurrentImage model index =
-    { model
-    | currentImageIndex = if Array.isEmpty model.images then 0 else clamp 0 ((Array.length model.images) - 1) index
-    }
+    case model.status of
+        Loaded images ->
+            { model
+            | currentImageIndex =
+                if Array.isEmpty images
+                then 0
+                else clamp 0 ((Array.length images) - 1) index
+            }
+        Loading -> model
+        Errored _ -> model
 
 updateCurrentImageProperties : Model -> Image -> Model 
 updateCurrentImageProperties model image =
-    { model | images = Array.set model.currentImageIndex image model.images }
+    case model.status of
+        Loaded images ->
+            { model
+            | status = Loaded (Array.set model.currentImageIndex image images)
+            }
+        Loading -> model
+        Errored _ -> model
 
 getCurrentImage : Model -> Image
 getCurrentImage model =
-    Maybe.withDefault emptyImage
-        <| Array.get model.currentImageIndex model.images
+    case model.status of
+        Loaded images ->
+            Maybe.withDefault emptyImage
+                <| Array.get model.currentImageIndex images
+        Loading -> emptyImage
+        Errored _ -> emptyImage
 
 emptyImage : Image
 emptyImage =
     { filename = ""
     , approved = False
-    , crop = { top = 0, left = 0, size = 0 }
+    , crop_left = 0
+    , crop_top = 0
+    , crop_size = 0
     }
 
 initialModel : Model
 initialModel =
-    { images = Array.fromList [{filename="test.png", approved=False, crop={top=0, left=0, size=0}}]
+    { status = Loading
     , currentImageIndex = 0
     }
+
+initialCmd : Cmd Msg
+initialCmd =
+    Http.get
+        { url = apiUrl ++ "/get_images"
+        , expect = Http.expectJson GotImages (array imageDecoder)
+        }
 
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( initialModel, Cmd.none )
+        { init = \_ -> ( initialModel, initialCmd )
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
