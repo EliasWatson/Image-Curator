@@ -47,3 +47,8 @@
 	display: flex;
 	justify-content: center;
 }
+
+.workspace .image-viewer img {
+	max-width: 80vw;
+	max-height: 90vh;
+}
