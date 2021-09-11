@@ -16,7 +16,7 @@ import Json.Decode.Pipeline exposing (optional, required)
 
 import Canvas exposing (rect, shapes, texture)
 import Canvas.Texture as Texture exposing (Texture)
-import Canvas.Settings exposing (fill)
+import Canvas.Settings exposing (fill, stroke)
 import Canvas.Settings.Advanced exposing (rotate, transform, translate, scale)
 import Color
 
@@ -24,7 +24,7 @@ apiUrl : String
 apiUrl = "http://192.168.0.152:8080"
 
 canvasSize : number
-canvasSize = 768
+canvasSize = 1024
 
 type Msg
     = GotImages (Result Http.Error (Array Image))
@@ -134,7 +134,8 @@ viewImageViewer model =
             }
             []
             [ canvasClearScreen
-            , canvasRender model
+            , canvasRenderImage model
+            , canvasRenderCrop model
             ]
         ]
 
@@ -142,8 +143,8 @@ canvasClearScreen : Canvas.Renderable
 canvasClearScreen =
     shapes [ fill Color.white ] [ rect ( 0, 0 ) canvasSize canvasSize ]
 
-canvasRender : Model -> Canvas.Renderable
-canvasRender model =
+canvasRenderImage : Model -> Canvas.Renderable
+canvasRenderImage model =
     case model.currentTexture of
         Loaded texture_ ->
             let
@@ -162,6 +163,21 @@ canvasRender model =
                     texture_
         Loading -> shapes [] []
         Errored _ -> shapes [] []
+
+canvasRenderCrop : Model -> Canvas.Renderable
+canvasRenderCrop model =
+    let
+        currentImage = getCurrentImage model
+    in
+    shapes
+        [ stroke Color.red ]
+        [ rect
+            ( toFloat currentImage.crop_left
+            , toFloat currentImage.crop_top
+            )
+            ( toFloat currentImage.crop_size )
+            ( toFloat currentImage.crop_size )
+        ]
 
 viewButton : List String -> Msg -> Html Msg -> Html Msg
 viewButton classes msg content =

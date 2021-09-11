@@ -48,7 +48,10 @@
 	justify-content: center;
 }
 
-.workspace .image-viewer img {
+.workspace .image-viewer canvas {
+	display: block;
 	max-width: 80vw;
 	max-height: 90vh;
+	width: auto !important;
+	height: auto !important;
 }

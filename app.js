@@ -6840,7 +6840,7 @@ var $author$project$ImageCurator$viewNavigationBar = function (model) {
 					_List_Nil))
 			]));
 };
-var $author$project$ImageCurator$canvasSize = 768;
+var $author$project$ImageCurator$canvasSize = 1024;
 var $joakin$elm_canvas$Canvas$Internal$Canvas$Fill = function (a) {
 	return {$: 'Fill', a: a};
 };
@@ -7006,6 +7006,28 @@ var $author$project$ImageCurator$canvasClearScreen = A2(
 			$author$project$ImageCurator$canvasSize,
 			$author$project$ImageCurator$canvasSize)
 		]));
+var $avh4$elm_color$Color$red = A4($avh4$elm_color$Color$RgbaSpace, 204 / 255, 0 / 255, 0 / 255, 1.0);
+var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingDrawOp(
+		$joakin$elm_canvas$Canvas$Internal$Canvas$Stroke(color));
+};
+var $author$project$ImageCurator$canvasRenderCrop = function (model) {
+	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	return A2(
+		$joakin$elm_canvas$Canvas$shapes,
+		_List_fromArray(
+			[
+				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red)
+			]),
+		_List_fromArray(
+			[
+				A3(
+				$joakin$elm_canvas$Canvas$rect,
+				_Utils_Tuple2(currentImage.crop_left, currentImage.crop_top),
+				currentImage.crop_size,
+				currentImage.crop_size)
+			]));
+};
 var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
 	if (texture.$ === 'TImage') {
 		var image = texture.a;
@@ -7158,7 +7180,7 @@ var $joakin$elm_canvas$Canvas$Settings$Advanced$Translate = F2(
 		return {$: 'Translate', a: a, b: b};
 	});
 var $joakin$elm_canvas$Canvas$Settings$Advanced$translate = $joakin$elm_canvas$Canvas$Settings$Advanced$Translate;
-var $author$project$ImageCurator$canvasRender = function (model) {
+var $author$project$ImageCurator$canvasRenderImage = function (model) {
 	var _v0 = model.currentTexture;
 	switch (_v0.$) {
 		case 'Loaded':
@@ -7889,7 +7911,8 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 				_List_fromArray(
 					[
 						$author$project$ImageCurator$canvasClearScreen,
-						$author$project$ImageCurator$canvasRender(model)
+						$author$project$ImageCurator$canvasRenderImage(model),
+						$author$project$ImageCurator$canvasRenderCrop(model)
 					]))
 			]));
 };
