@@ -11,6 +11,7 @@ import Html.Events exposing (onClick, onInput)
 
 import Array exposing (Array)
 
+import Json.Encode
 import Json.Decode exposing (Decoder, int, array, string, bool, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 
@@ -37,6 +38,9 @@ type Msg
     | SetCropLeft String
     | SetCropTop String
     | SetCropSize String
+    | CropCenter
+    | CropExtend
+    | SaveProperties
     | AnimationFrame Float
 
 type Load a
@@ -52,11 +56,20 @@ type alias Image =
     , crop_size : Int
     }
 
+type alias TextureProperties =
+    { scale : Float
+    , width : Int
+    , height : Int
+    , leftOffset : Int
+    , topOffset : Int
+    }
+
 type alias Model =
     { status : Load (Array Image)
     , currentImageIndex : Int
     , currentTexture : Load Texture
     , currentTextureSource : Texture.Source Msg
+    , currentTextureProperties : TextureProperties
     }
 
 view : Model -> Html Msg
@@ -119,6 +132,11 @@ viewProperties model =
                     ] [] ]
                 ]
             ]
+        , div [ class "crop-presets" ]
+            [ viewButton [] CropCenter ( text "Center" ) 
+            , viewButton [] CropExtend ( text "Extend" )
+            ]
+        , viewButton [] SaveProperties ( text "Save" )
         ]
 
 viewImageViewer : Model -> Html Msg
@@ -148,10 +166,9 @@ canvasRenderImage model =
     case model.currentTexture of
         Loaded texture_ ->
             let
-                dimensions = Texture.dimensions texture_
-                scale_ = canvasSize / (max dimensions.width dimensions.height)
-                leftShift = (canvasSize - (dimensions.width * scale_)) / 2
-                topShift = (canvasSize - (dimensions.height * scale_)) / 2
+                scale_ = model.currentTextureProperties.scale
+                leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
+                topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
             in
                 texture
                     [ transform
@@ -168,16 +185,21 @@ canvasRenderCrop : Model -> Canvas.Renderable
 canvasRenderCrop model =
     let
         currentImage = getCurrentImage model
+        cropLeft =
+            toFloat
+                ( model.currentTextureProperties.leftOffset
+                + currentImage.crop_left
+                )
+            * model.currentTextureProperties.scale
+        cropTop =
+            toFloat
+                ( model.currentTextureProperties.topOffset
+                + currentImage.crop_top
+                )
+            * model.currentTextureProperties.scale
+        cropSize = toFloat currentImage.crop_size * model.currentTextureProperties.scale
     in
-    shapes
-        [ stroke Color.red ]
-        [ rect
-            ( toFloat currentImage.crop_left
-            , toFloat currentImage.crop_top
-            )
-            ( toFloat currentImage.crop_size )
-            ( toFloat currentImage.crop_size )
-        ]
+    shapes [ stroke Color.red ] [ rect ( cropLeft, cropTop ) cropSize cropSize ]
 
 viewButton : List String -> Msg -> Html Msg -> Html Msg
 viewButton classes msg content =
@@ -220,7 +242,24 @@ update msg model =
             , Cmd.none
             )
         GotTexture Nothing -> ( { model | currentTexture = Errored "Failed to load texture" }, Cmd.none )
-        GotTexture (Just texture) -> ( { model | currentTexture = Loaded texture }, Cmd.none )
+        GotTexture (Just texture) ->
+            let
+                dimensions = Texture.dimensions texture
+                maxDim = max dimensions.width dimensions.height
+                scale = canvasSize / maxDim
+            in
+            (   { model
+                | currentTexture = Loaded texture
+                , currentTextureProperties =
+                    { scale = scale
+                    , width = round dimensions.width
+                    , height = round dimensions.height
+                    , leftOffset = floor ((maxDim - dimensions.width) / 2)
+                    , topOffset = floor ((maxDim - dimensions.height) / 2)
+                    }
+                }
+            , Cmd.none
+            )
         UpdatedDatabase _ -> ( model, Cmd.none )
         SetCurrentImageStr indexString ->
             ( updateCurrentImage
@@ -237,49 +276,67 @@ update msg model =
             ( updateCurrentImageProperties
                 model
                 { currentImage | approved = not currentImage.approved }
-            , Http.get
-                { url = apiUrl
-                    ++ "/set_image_approved/"
-                    ++ currentImage.filename
-                    ++ "/"
-                    ++ (if currentImage.approved then "false" else "true")
-                , expect = Http.expectWhatever UpdatedDatabase
-                }
+            , Cmd.none
             )
         SetCropLeft numString ->
             let
                 newImage = { currentImage | crop_left = (Maybe.withDefault currentImage.crop_left (String.toInt numString)) }
             in
-            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
+            ( updateCurrentImageProperties model newImage, Cmd.none )
         SetCropTop numString ->
             let
                 newImage = { currentImage | crop_top = (Maybe.withDefault currentImage.crop_top (String.toInt numString)) }
             in
-            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
+            ( updateCurrentImageProperties model newImage, Cmd.none )
         SetCropSize numString ->
             let
                 newImage = { currentImage | crop_size = (Maybe.withDefault currentImage.crop_size (String.toInt numString)) }
             in
-            ( updateCurrentImageProperties model newImage, databaseUpdateCrop newImage )
+            ( updateCurrentImageProperties model newImage, Cmd.none )
+        CropCenter ->
+            ( model
+            , Cmd.none
+            )
+        CropExtend ->
+            let
+                maxDim = max
+                    model.currentTextureProperties.width
+                    model.currentTextureProperties.height
+            in
+            ( updateCurrentImageProperties model
+                { currentImage
+                | crop_left = negate model.currentTextureProperties.leftOffset
+                , crop_top = negate model.currentTextureProperties.topOffset
+                , crop_size = maxDim
+                }
+            , Cmd.none
+            )
+        SaveProperties -> ( model, updateDatabase <| getCurrentImage model )
         AnimationFrame dt -> ( model, Cmd.none )
 
-databaseUpdateCrop : Image -> Cmd Msg
-databaseUpdateCrop image =
-    Http.get
-        { url = apiUrl
-            ++ "/set_image_crop/"
-            ++ image.filename
-            ++ "/" ++ (String.fromInt image.crop_left)
-            ++ "/" ++ (String.fromInt image.crop_top)
-            ++ "/" ++ (String.fromInt image.crop_size)
+updateDatabase : Image -> Cmd Msg
+updateDatabase image =
+    Http.post
+        { url = apiUrl ++ "/update_properties"
+        , body = Http.jsonBody <| imageEncode image
         , expect = Http.expectWhatever UpdatedDatabase
         }
+
+imageEncode : Image -> Json.Encode.Value
+imageEncode image =
+    Json.Encode.object
+        [ ( "filename", Json.Encode.string image.filename )
+        , ( "approved", Json.Encode.bool image.approved )
+        , ( "crop_left", Json.Encode.int image.crop_left )
+        , ( "crop_top", Json.Encode.int image.crop_top )
+        , ( "crop_size", Json.Encode.int image.crop_size )
+        ]
 
 imageDecoder : Decoder Image
 imageDecoder =
     succeed Image
         |> required "filename" string
-        |> required "activated" bool
+        |> required "approved" bool
         |> required "crop_left" int
         |> required "crop_top" int
         |> required "crop_size" int
@@ -343,6 +400,13 @@ initialModel =
     , currentImageIndex = 0
     , currentTexture = Loading
     , currentTextureSource = Texture.loadFromImageUrl "img/loading.png" GotTexture
+    , currentTextureProperties =
+        { scale = 1.0
+        , width = 0
+        , height = 0
+        , leftOffset = 0
+        , topOffset = 0
+        }
     }
 
 initialCmd : Cmd Msg

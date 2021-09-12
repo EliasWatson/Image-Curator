@@ -6181,7 +6181,7 @@ var $author$project$ImageCurator$imageDecoder = A3(
 			$elm$json$Json$Decode$int,
 			A3(
 				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-				'activated',
+				'approved',
 				$elm$json$Json$Decode$bool,
 				A3(
 					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
@@ -6211,6 +6211,7 @@ var $joakin$elm_canvas$Canvas$Texture$loadFromImageUrl = F2(
 var $author$project$ImageCurator$initialModel = {
 	currentImageIndex: 0,
 	currentTexture: $author$project$ImageCurator$Loading,
+	currentTextureProperties: {height: 0, leftOffset: 0, scale: 1.0, topOffset: 0, width: 0},
 	currentTextureSource: A2($joakin$elm_canvas$Canvas$Texture$loadFromImageUrl, 'img/loading.png', $author$project$ImageCurator$GotTexture),
 	status: $author$project$ImageCurator$Loading
 };
@@ -6351,32 +6352,15 @@ var $author$project$ImageCurator$Errored = function (a) {
 var $author$project$ImageCurator$Loaded = function (a) {
 	return {$: 'Loaded', a: a};
 };
-var $author$project$ImageCurator$UpdatedDatabase = function (a) {
-	return {$: 'UpdatedDatabase', a: a};
-};
-var $elm$http$Http$expectBytesResponse = F2(
-	function (toMsg, toResult) {
-		return A3(
-			_Http_expect,
-			'arraybuffer',
-			_Http_toDataView,
-			A2($elm$core$Basics$composeR, toResult, toMsg));
-	});
-var $elm$http$Http$expectWhatever = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectBytesResponse,
-		toMsg,
-		$elm$http$Http$resolve(
-			function (_v0) {
-				return $elm$core$Result$Ok(_Utils_Tuple0);
-			}));
-};
-var $author$project$ImageCurator$databaseUpdateCrop = function (image) {
-	return $elm$http$Http$get(
-		{
-			expect: $elm$http$Http$expectWhatever($author$project$ImageCurator$UpdatedDatabase),
-			url: $author$project$ImageCurator$apiUrl + ('/set_image_crop/' + (image.filename + ('/' + ($elm$core$String$fromInt(image.crop_left) + ('/' + ($elm$core$String$fromInt(image.crop_top) + ('/' + $elm$core$String$fromInt(image.crop_size))))))))
-		});
+var $author$project$ImageCurator$canvasSize = 1024;
+var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
+	if (texture.$ === 'TImage') {
+		var image = texture.a;
+		return {height: image.height, width: image.width};
+	} else {
+		var data = texture.a;
+		return {height: data.height, width: data.width};
+	}
 };
 var $author$project$ImageCurator$emptyImage = {approved: false, crop_left: 0, crop_size: 0, crop_top: 0, filename: ''};
 var $elm$core$Bitwise$and = _Bitwise_and;
@@ -6445,9 +6429,13 @@ var $author$project$ImageCurator$getCurrentImage = function (model) {
 			return $author$project$ImageCurator$emptyImage;
 	}
 };
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Basics$round = _Basics_round;
 var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
@@ -6553,6 +6541,82 @@ var $author$project$ImageCurator$updateCurrentImageProperties = F2(
 				return model;
 		}
 	});
+var $author$project$ImageCurator$UpdatedDatabase = function (a) {
+	return {$: 'UpdatedDatabase', a: a};
+};
+var $elm$http$Http$expectBytesResponse = F2(
+	function (toMsg, toResult) {
+		return A3(
+			_Http_expect,
+			'arraybuffer',
+			_Http_toDataView,
+			A2($elm$core$Basics$composeR, toResult, toMsg));
+	});
+var $elm$http$Http$expectWhatever = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectBytesResponse,
+		toMsg,
+		$elm$http$Http$resolve(
+			function (_v0) {
+				return $elm$core$Result$Ok(_Utils_Tuple0);
+			}));
+};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$ImageCurator$imageEncode = function (image) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'filename',
+				$elm$json$Json$Encode$string(image.filename)),
+				_Utils_Tuple2(
+				'approved',
+				$elm$json$Json$Encode$bool(image.approved)),
+				_Utils_Tuple2(
+				'crop_left',
+				$elm$json$Json$Encode$int(image.crop_left)),
+				_Utils_Tuple2(
+				'crop_top',
+				$elm$json$Json$Encode$int(image.crop_top)),
+				_Utils_Tuple2(
+				'crop_size',
+				$elm$json$Json$Encode$int(image.crop_size))
+			]));
+};
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
+};
+var $elm$http$Http$post = function (r) {
+	return $elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+};
+var $author$project$ImageCurator$updateDatabase = function (image) {
+	return $elm$http$Http$post(
+		{
+			body: $elm$http$Http$jsonBody(
+				$author$project$ImageCurator$imageEncode(image)),
+			expect: $elm$http$Http$expectWhatever($author$project$ImageCurator$UpdatedDatabase),
+			url: $author$project$ImageCurator$apiUrl + '/update_properties'
+		});
+};
 var $author$project$ImageCurator$update = F2(
 	function (msg, model) {
 		var currentImage = $author$project$ImageCurator$getCurrentImage(model);
@@ -6596,11 +6660,21 @@ var $author$project$ImageCurator$update = F2(
 						$elm$core$Platform$Cmd$none);
 				} else {
 					var texture = msg.a.a;
+					var dimensions = $joakin$elm_canvas$Canvas$Texture$dimensions(texture);
+					var maxDim = A2($elm$core$Basics$max, dimensions.width, dimensions.height);
+					var scale = $author$project$ImageCurator$canvasSize / maxDim;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								currentTexture: $author$project$ImageCurator$Loaded(texture)
+								currentTexture: $author$project$ImageCurator$Loaded(texture),
+								currentTextureProperties: {
+									height: $elm$core$Basics$round(dimensions.height),
+									leftOffset: $elm$core$Basics$floor((maxDim - dimensions.width) / 2),
+									scale: scale,
+									topOffset: $elm$core$Basics$floor((maxDim - dimensions.height) / 2),
+									width: $elm$core$Basics$round(dimensions.width)
+								}
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -6633,11 +6707,7 @@ var $author$project$ImageCurator$update = F2(
 						_Utils_update(
 							currentImage,
 							{approved: !currentImage.approved})),
-					$elm$http$Http$get(
-						{
-							expect: $elm$http$Http$expectWhatever($author$project$ImageCurator$UpdatedDatabase),
-							url: $author$project$ImageCurator$apiUrl + ('/set_image_approved/' + (currentImage.filename + ('/' + (currentImage.approved ? 'false' : 'true'))))
-						}));
+					$elm$core$Platform$Cmd$none);
 			case 'SetCropLeft':
 				var numString = msg.a;
 				var newImage = _Utils_update(
@@ -6650,7 +6720,7 @@ var $author$project$ImageCurator$update = F2(
 					});
 				return _Utils_Tuple2(
 					A2($author$project$ImageCurator$updateCurrentImageProperties, model, newImage),
-					$author$project$ImageCurator$databaseUpdateCrop(newImage));
+					$elm$core$Platform$Cmd$none);
 			case 'SetCropTop':
 				var numString = msg.a;
 				var newImage = _Utils_update(
@@ -6663,7 +6733,7 @@ var $author$project$ImageCurator$update = F2(
 					});
 				return _Utils_Tuple2(
 					A2($author$project$ImageCurator$updateCurrentImageProperties, model, newImage),
-					$author$project$ImageCurator$databaseUpdateCrop(newImage));
+					$elm$core$Platform$Cmd$none);
 			case 'SetCropSize':
 				var numString = msg.a;
 				var newImage = _Utils_update(
@@ -6676,13 +6746,29 @@ var $author$project$ImageCurator$update = F2(
 					});
 				return _Utils_Tuple2(
 					A2($author$project$ImageCurator$updateCurrentImageProperties, model, newImage),
-					$author$project$ImageCurator$databaseUpdateCrop(newImage));
+					$elm$core$Platform$Cmd$none);
+			case 'CropCenter':
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'CropExtend':
+				var maxDim = A2($elm$core$Basics$max, model.currentTextureProperties.width, model.currentTextureProperties.height);
+				return _Utils_Tuple2(
+					A2(
+						$author$project$ImageCurator$updateCurrentImageProperties,
+						model,
+						_Utils_update(
+							currentImage,
+							{crop_left: -model.currentTextureProperties.leftOffset, crop_size: maxDim, crop_top: -model.currentTextureProperties.topOffset})),
+					$elm$core$Platform$Cmd$none);
+			case 'SaveProperties':
+				return _Utils_Tuple2(
+					model,
+					$author$project$ImageCurator$updateDatabase(
+						$author$project$ImageCurator$getCurrentImage(model)));
 			default:
 				var dt = msg.a;
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -6840,7 +6926,6 @@ var $author$project$ImageCurator$viewNavigationBar = function (model) {
 					_List_Nil))
 			]));
 };
-var $author$project$ImageCurator$canvasSize = 1024;
 var $joakin$elm_canvas$Canvas$Internal$Canvas$Fill = function (a) {
 	return {$: 'Fill', a: a};
 };
@@ -7013,6 +7098,9 @@ var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
 };
 var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	var cropTop = (model.currentTextureProperties.topOffset + currentImage.crop_top) * model.currentTextureProperties.scale;
+	var cropSize = currentImage.crop_size * model.currentTextureProperties.scale;
+	var cropLeft = (model.currentTextureProperties.leftOffset + currentImage.crop_left) * model.currentTextureProperties.scale;
 	return A2(
 		$joakin$elm_canvas$Canvas$shapes,
 		_List_fromArray(
@@ -7023,19 +7111,10 @@ var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 			[
 				A3(
 				$joakin$elm_canvas$Canvas$rect,
-				_Utils_Tuple2(currentImage.crop_left, currentImage.crop_top),
-				currentImage.crop_size,
-				currentImage.crop_size)
+				_Utils_Tuple2(cropLeft, cropTop),
+				cropSize,
+				cropSize)
 			]));
-};
-var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
-	if (texture.$ === 'TImage') {
-		var image = texture.a;
-		return {height: image.height, width: image.width};
-	} else {
-		var data = texture.a;
-		return {height: data.height, width: data.width};
-	}
 };
 var $joakin$elm_canvas$Canvas$Settings$Advanced$Scale = F2(
 	function (a, b) {
@@ -7071,19 +7150,6 @@ var $elm$json$Json$Encode$list = F2(
 				_Json_emptyArray(_Utils_Tuple0),
 				entries));
 	});
-var $elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (_v0, obj) {
-					var k = _v0.a;
-					var v = _v0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
 var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$fn = F2(
 	function (name, args) {
 		return $elm$json$Json$Encode$object(
@@ -7185,10 +7251,9 @@ var $author$project$ImageCurator$canvasRenderImage = function (model) {
 	switch (_v0.$) {
 		case 'Loaded':
 			var texture_ = _v0.a;
-			var dimensions = $joakin$elm_canvas$Canvas$Texture$dimensions(texture_);
-			var scale_ = $author$project$ImageCurator$canvasSize / A2($elm$core$Basics$max, dimensions.width, dimensions.height);
-			var leftShift = ($author$project$ImageCurator$canvasSize - (dimensions.width * scale_)) / 2;
-			var topShift = ($author$project$ImageCurator$canvasSize - (dimensions.height * scale_)) / 2;
+			var scale_ = model.currentTextureProperties.scale;
+			var topShift = model.currentTextureProperties.topOffset * scale_;
+			var leftShift = model.currentTextureProperties.leftOffset * scale_;
 			return A3(
 				$joakin$elm_canvas$Canvas$texture,
 				_List_fromArray(
@@ -7259,7 +7324,6 @@ var $joakin$elm_canvas$Canvas$renderClear = F4(
 			A4($joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$clearRect, x, y, w, h),
 			cmds);
 	});
-var $elm$json$Json$Encode$bool = _Json_wrap;
 var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$arc = F6(
 	function (x, y, radius, startAngle, endAngle, anticlockwise) {
 		return A2(
@@ -7521,7 +7585,6 @@ var $elm$core$String$concat = function (strings) {
 	return A2($elm$core$String$join, '', strings);
 };
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $elm$core$Basics$round = _Basics_round;
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -7916,6 +7979,9 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 					]))
 			]));
 };
+var $author$project$ImageCurator$CropCenter = {$: 'CropCenter'};
+var $author$project$ImageCurator$CropExtend = {$: 'CropExtend'};
+var $author$project$ImageCurator$SaveProperties = {$: 'SaveProperties'};
 var $author$project$ImageCurator$SetCropLeft = function (a) {
 	return {$: 'SetCropLeft', a: a};
 };
@@ -8080,7 +8146,31 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 										_List_Nil)
 									]))
 							]))
-					]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('crop-presets')
+					]),
+				_List_fromArray(
+					[
+						A3(
+						$author$project$ImageCurator$viewButton,
+						_List_Nil,
+						$author$project$ImageCurator$CropCenter,
+						$elm$html$Html$text('Center')),
+						A3(
+						$author$project$ImageCurator$viewButton,
+						_List_Nil,
+						$author$project$ImageCurator$CropExtend,
+						$elm$html$Html$text('Extend'))
+					])),
+				A3(
+				$author$project$ImageCurator$viewButton,
+				_List_Nil,
+				$author$project$ImageCurator$SaveProperties,
+				$elm$html$Html$text('Save'))
 			]));
 };
 var $author$project$ImageCurator$viewWorkspace = function (model) {

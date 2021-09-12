@@ -39,6 +39,23 @@
 	margin-bottom: 10px;
 }
 
+.workspace .properties .button {
+	text-align: center;
+}
+
+.workspace .properties .crop-presets {
+	display: flex;
+	margin-bottom: 5px;
+}
+
+.workspace .properties .crop-presets .button {
+	flex-grow: 1;
+}
+
+.workspace .properties .crop-presets .button:first-of-type {
+	margin-right: 5px;
+}
+
 .workspace .image-viewer {
 	border: 1px solid gray;
 	border-radius: 3px;
