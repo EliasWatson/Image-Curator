@@ -15,16 +15,6 @@ body {
 	cursor: pointer;
 }
 
-.navbar {
-	display: flex;
-	justify-content: center;
-}
-
-.navbar input {
-	margin: 0 5px;
-	text-align: center;
-}
-
 .workspace {
 	display: flex;
 	justify-content: center;
@@ -66,6 +56,16 @@ body {
 
 .workspace .properties .crop-presets .button:first-of-type {
 	margin-right: 5px;
+}
+
+.workspace .properties .navbar {
+	display: flex;
+	justify-content: center;
+}
+
+.workspace .properties .navbar input {
+	margin: 0 5px;
+	text-align: center;
 }
 
 .workspace .image-viewer {

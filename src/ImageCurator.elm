@@ -76,10 +76,7 @@ type alias Model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "content" ]
-        [ viewNavigationBar model
-        , viewWorkspace model
-        ]
+    div [ class "content" ] [ viewWorkspace model ]
 
 viewNavigationBar : Model -> Html Msg
 viewNavigationBar model =
@@ -140,6 +137,7 @@ viewProperties model =
             , viewButton [] CropExtend ( text "Extend" )
             ]
         , viewButton [] SaveProperties ( text "Save" )
+        , viewNavigationBar model
         ]
 
 viewImageViewer : Model -> Html Msg
