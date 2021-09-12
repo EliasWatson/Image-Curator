@@ -6624,6 +6624,8 @@ var $elm$browser$Browser$Events$on = F3(
 			A3($elm$browser$Browser$Events$MySub, node, name, decoder));
 	});
 var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keydown');
+var $author$project$ImageCurator$CropCenter = {$: 'CropCenter'};
+var $author$project$ImageCurator$CropExtend = {$: 'CropExtend'};
 var $author$project$ImageCurator$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
@@ -6718,6 +6720,12 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Basics$not = _Basics_not;
 var $elm$core$Basics$round = _Basics_round;
+var $author$project$ImageCurator$sendMsg = function (msg) {
+	return A2(
+		$elm$core$Task$perform,
+		$elm$core$Basics$identity,
+		$elm$core$Task$succeed(msg));
+};
 var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
@@ -7070,8 +7078,7 @@ var $author$project$ImageCurator$update = F2(
 			case 'SaveProperties':
 				return _Utils_Tuple2(
 					model,
-					$author$project$ImageCurator$updateDatabase(
-						$author$project$ImageCurator$getCurrentImage(model)));
+					$author$project$ImageCurator$updateDatabase(currentImage));
 			case 'AnimationFrame':
 				var dt = msg.a;
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -7139,6 +7146,36 @@ var $author$project$ImageCurator$update = F2(
 						return _Utils_Tuple2(
 							A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1),
 							$elm$core$Platform$Cmd$none);
+					case ' ':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{processed: !currentImage.processed})),
+							$elm$core$Platform$Cmd$none);
+					case 'q':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{approved: !currentImage.approved})),
+							$elm$core$Platform$Cmd$none);
+					case 'e':
+						return _Utils_Tuple2(
+							model,
+							$author$project$ImageCurator$sendMsg($author$project$ImageCurator$CropExtend));
+					case 'r':
+						return _Utils_Tuple2(
+							model,
+							$author$project$ImageCurator$sendMsg($author$project$ImageCurator$CropCenter));
+					case 'Enter':
+						return _Utils_Tuple2(
+							model,
+							$author$project$ImageCurator$updateDatabase(currentImage));
 					default:
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
@@ -8217,8 +8254,6 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 					]))
 			]));
 };
-var $author$project$ImageCurator$CropCenter = {$: 'CropCenter'};
-var $author$project$ImageCurator$CropExtend = {$: 'CropExtend'};
 var $author$project$ImageCurator$SaveProperties = {$: 'SaveProperties'};
 var $author$project$ImageCurator$SetCropLeft = function (a) {
 	return {$: 'SetCropLeft', a: a};

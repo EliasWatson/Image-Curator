@@ -4,6 +4,7 @@ import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 
 import Http
+import Task
 
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, name, src, title, type_, placeholder, value, checked)
@@ -335,7 +336,7 @@ update msg model =
                 }
             , Cmd.none
             )
-        SaveProperties -> ( model, updateDatabase <| getCurrentImage model )
+        SaveProperties -> ( model, updateDatabase currentImage )
         AnimationFrame dt -> ( model, Cmd.none )
         KeyDown "ArrowLeft" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - 1 }, Cmd.none )
         KeyDown "ArrowRight" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + 1 }, Cmd.none )
@@ -345,6 +346,11 @@ update msg model =
         KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
         KeyDown "a" -> ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
         KeyDown "d" -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
+        KeyDown " " -> ( updateCurrentImageProperties model { currentImage | processed = not currentImage.processed }, Cmd.none )
+        KeyDown "q" -> ( updateCurrentImageProperties model { currentImage | approved = not currentImage.approved }, Cmd.none )
+        KeyDown "e" -> ( model, sendMsg CropExtend )
+        KeyDown "r" -> ( model, sendMsg CropCenter )
+        KeyDown "Enter" -> ( model, updateDatabase currentImage )
         KeyDown _ -> ( model, Cmd.none )
 
 updateDatabase : Image -> Cmd Msg
@@ -419,6 +425,11 @@ getCurrentImage model =
                 <| Array.get model.currentImageIndex images
         Loading -> emptyImage
         Errored _ -> emptyImage
+
+sendMsg : msg -> Cmd msg
+sendMsg msg =
+    Task.succeed msg
+    |> Task.perform identity
 
 stopKeyPropagation : Attribute Msg
 stopKeyPropagation =
