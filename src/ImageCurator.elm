@@ -51,9 +51,9 @@ type Load a
 type alias Image =
     { filename : String
     , approved : Bool
-    , crop_left : Int
-    , crop_top : Int
-    , crop_size : Int
+    , cropLeft : Int
+    , cropTop : Int
+    , cropSize : Int
     }
 
 type alias TextureProperties =
@@ -111,7 +111,7 @@ viewProperties model =
                 [ td [] [ text "Crop Left" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop_left)
+                    , value (String.fromInt currentImage.cropLeft)
                     , onInput SetCropLeft
                     ] [] ]
                 ]
@@ -119,7 +119,7 @@ viewProperties model =
                 [ td [] [ text "Crop Top" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop_top)
+                    , value (String.fromInt currentImage.cropTop)
                     , onInput SetCropTop
                     ] [] ]
                 ]
@@ -127,7 +127,7 @@ viewProperties model =
                 [ td [] [ text "Crop Size" ]
                 , td [] [ input
                     [ type_ "number"
-                    , value (String.fromInt currentImage.crop_size)
+                    , value (String.fromInt currentImage.cropSize)
                     , onInput SetCropSize
                     ] [] ]
                 ]
@@ -188,16 +188,16 @@ canvasRenderCrop model =
         cropLeft =
             toFloat
                 ( model.currentTextureProperties.leftOffset
-                + currentImage.crop_left
+                + currentImage.cropLeft
                 )
             * model.currentTextureProperties.scale
         cropTop =
             toFloat
                 ( model.currentTextureProperties.topOffset
-                + currentImage.crop_top
+                + currentImage.cropTop
                 )
             * model.currentTextureProperties.scale
-        cropSize = toFloat currentImage.crop_size * model.currentTextureProperties.scale
+        cropSize = toFloat currentImage.cropSize * model.currentTextureProperties.scale
     in
     shapes [ stroke Color.red ] [ rect ( cropLeft, cropTop ) cropSize cropSize ]
 
@@ -280,21 +280,31 @@ update msg model =
             )
         SetCropLeft numString ->
             let
-                newImage = { currentImage | crop_left = (Maybe.withDefault currentImage.crop_left (String.toInt numString)) }
+                newImage = { currentImage | cropLeft = (Maybe.withDefault currentImage.cropLeft (String.toInt numString)) }
             in
             ( updateCurrentImageProperties model newImage, Cmd.none )
         SetCropTop numString ->
             let
-                newImage = { currentImage | crop_top = (Maybe.withDefault currentImage.crop_top (String.toInt numString)) }
+                newImage = { currentImage | cropTop = (Maybe.withDefault currentImage.cropTop (String.toInt numString)) }
             in
             ( updateCurrentImageProperties model newImage, Cmd.none )
         SetCropSize numString ->
             let
-                newImage = { currentImage | crop_size = (Maybe.withDefault currentImage.crop_size (String.toInt numString)) }
+                newImage = { currentImage | cropSize = (Maybe.withDefault currentImage.cropSize (String.toInt numString)) }
             in
             ( updateCurrentImageProperties model newImage, Cmd.none )
         CropCenter ->
-            ( model
+            let
+                minDim = min
+                    model.currentTextureProperties.width
+                    model.currentTextureProperties.height
+            in
+            ( updateCurrentImageProperties model
+                { currentImage
+                | cropLeft = round (toFloat (model.currentTextureProperties.width - minDim) / 2)
+                , cropTop = round (toFloat (model.currentTextureProperties.height - minDim) / 2)
+                , cropSize = minDim
+                }
             , Cmd.none
             )
         CropExtend ->
@@ -305,9 +315,9 @@ update msg model =
             in
             ( updateCurrentImageProperties model
                 { currentImage
-                | crop_left = negate model.currentTextureProperties.leftOffset
-                , crop_top = negate model.currentTextureProperties.topOffset
-                , crop_size = maxDim
+                | cropLeft = negate model.currentTextureProperties.leftOffset
+                , cropTop = negate model.currentTextureProperties.topOffset
+                , cropSize = maxDim
                 }
             , Cmd.none
             )
@@ -327,9 +337,9 @@ imageEncode image =
     Json.Encode.object
         [ ( "filename", Json.Encode.string image.filename )
         , ( "approved", Json.Encode.bool image.approved )
-        , ( "crop_left", Json.Encode.int image.crop_left )
-        , ( "crop_top", Json.Encode.int image.crop_top )
-        , ( "crop_size", Json.Encode.int image.crop_size )
+        , ( "crop_left", Json.Encode.int image.cropLeft )
+        , ( "crop_top", Json.Encode.int image.cropTop )
+        , ( "crop_size", Json.Encode.int image.cropSize )
         ]
 
 imageDecoder : Decoder Image
@@ -389,9 +399,9 @@ emptyImage : Image
 emptyImage =
     { filename = ""
     , approved = False
-    , crop_left = 0
-    , crop_top = 0
-    , crop_size = 0
+    , cropLeft = 0
+    , cropTop = 0
+    , cropSize = 0
     }
 
 initialModel : Model

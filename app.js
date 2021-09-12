@@ -6152,8 +6152,8 @@ var $elm$http$Http$get = function (r) {
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
 var $author$project$ImageCurator$Image = F5(
-	function (filename, approved, crop_left, crop_top, crop_size) {
-		return {approved: approved, crop_left: crop_left, crop_size: crop_size, crop_top: crop_top, filename: filename};
+	function (filename, approved, cropLeft, cropTop, cropSize) {
+		return {approved: approved, cropLeft: cropLeft, cropSize: cropSize, cropTop: cropTop, filename: filename};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
@@ -6362,7 +6362,7 @@ var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
 		return {height: data.height, width: data.width};
 	}
 };
-var $author$project$ImageCurator$emptyImage = {approved: false, crop_left: 0, crop_size: 0, crop_top: 0, filename: ''};
+var $author$project$ImageCurator$emptyImage = {approved: false, cropLeft: 0, cropSize: 0, cropTop: 0, filename: ''};
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
@@ -6429,6 +6429,10 @@ var $author$project$ImageCurator$getCurrentImage = function (model) {
 			return $author$project$ImageCurator$emptyImage;
 	}
 };
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -6589,13 +6593,13 @@ var $author$project$ImageCurator$imageEncode = function (image) {
 				$elm$json$Json$Encode$bool(image.approved)),
 				_Utils_Tuple2(
 				'crop_left',
-				$elm$json$Json$Encode$int(image.crop_left)),
+				$elm$json$Json$Encode$int(image.cropLeft)),
 				_Utils_Tuple2(
 				'crop_top',
-				$elm$json$Json$Encode$int(image.crop_top)),
+				$elm$json$Json$Encode$int(image.cropTop)),
 				_Utils_Tuple2(
 				'crop_size',
-				$elm$json$Json$Encode$int(image.crop_size))
+				$elm$json$Json$Encode$int(image.cropSize))
 			]));
 };
 var $elm$http$Http$jsonBody = function (value) {
@@ -6713,9 +6717,9 @@ var $author$project$ImageCurator$update = F2(
 				var newImage = _Utils_update(
 					currentImage,
 					{
-						crop_left: A2(
+						cropLeft: A2(
 							$elm$core$Maybe$withDefault,
-							currentImage.crop_left,
+							currentImage.cropLeft,
 							$elm$core$String$toInt(numString))
 					});
 				return _Utils_Tuple2(
@@ -6726,9 +6730,9 @@ var $author$project$ImageCurator$update = F2(
 				var newImage = _Utils_update(
 					currentImage,
 					{
-						crop_top: A2(
+						cropTop: A2(
 							$elm$core$Maybe$withDefault,
-							currentImage.crop_top,
+							currentImage.cropTop,
 							$elm$core$String$toInt(numString))
 					});
 				return _Utils_Tuple2(
@@ -6739,16 +6743,28 @@ var $author$project$ImageCurator$update = F2(
 				var newImage = _Utils_update(
 					currentImage,
 					{
-						crop_size: A2(
+						cropSize: A2(
 							$elm$core$Maybe$withDefault,
-							currentImage.crop_size,
+							currentImage.cropSize,
 							$elm$core$String$toInt(numString))
 					});
 				return _Utils_Tuple2(
 					A2($author$project$ImageCurator$updateCurrentImageProperties, model, newImage),
 					$elm$core$Platform$Cmd$none);
 			case 'CropCenter':
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				var minDim = A2($elm$core$Basics$min, model.currentTextureProperties.width, model.currentTextureProperties.height);
+				return _Utils_Tuple2(
+					A2(
+						$author$project$ImageCurator$updateCurrentImageProperties,
+						model,
+						_Utils_update(
+							currentImage,
+							{
+								cropLeft: $elm$core$Basics$round((model.currentTextureProperties.width - minDim) / 2),
+								cropSize: minDim,
+								cropTop: $elm$core$Basics$round((model.currentTextureProperties.height - minDim) / 2)
+							})),
+					$elm$core$Platform$Cmd$none);
 			case 'CropExtend':
 				var maxDim = A2($elm$core$Basics$max, model.currentTextureProperties.width, model.currentTextureProperties.height);
 				return _Utils_Tuple2(
@@ -6757,7 +6773,7 @@ var $author$project$ImageCurator$update = F2(
 						model,
 						_Utils_update(
 							currentImage,
-							{crop_left: -model.currentTextureProperties.leftOffset, crop_size: maxDim, crop_top: -model.currentTextureProperties.topOffset})),
+							{cropLeft: -model.currentTextureProperties.leftOffset, cropSize: maxDim, cropTop: -model.currentTextureProperties.topOffset})),
 					$elm$core$Platform$Cmd$none);
 			case 'SaveProperties':
 				return _Utils_Tuple2(
@@ -7098,9 +7114,9 @@ var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
 };
 var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
-	var cropTop = (model.currentTextureProperties.topOffset + currentImage.crop_top) * model.currentTextureProperties.scale;
-	var cropSize = currentImage.crop_size * model.currentTextureProperties.scale;
-	var cropLeft = (model.currentTextureProperties.leftOffset + currentImage.crop_left) * model.currentTextureProperties.scale;
+	var cropTop = (model.currentTextureProperties.topOffset + currentImage.cropTop) * model.currentTextureProperties.scale;
+	var cropSize = currentImage.cropSize * model.currentTextureProperties.scale;
+	var cropLeft = (model.currentTextureProperties.leftOffset + currentImage.cropLeft) * model.currentTextureProperties.scale;
 	return A2(
 		$joakin$elm_canvas$Canvas$shapes,
 		_List_fromArray(
@@ -8082,7 +8098,7 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 											[
 												$elm$html$Html$Attributes$type_('number'),
 												$elm$html$Html$Attributes$value(
-												$elm$core$String$fromInt(currentImage.crop_left)),
+												$elm$core$String$fromInt(currentImage.cropLeft)),
 												$elm$html$Html$Events$onInput($author$project$ImageCurator$SetCropLeft)
 											]),
 										_List_Nil)
@@ -8111,7 +8127,7 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 											[
 												$elm$html$Html$Attributes$type_('number'),
 												$elm$html$Html$Attributes$value(
-												$elm$core$String$fromInt(currentImage.crop_top)),
+												$elm$core$String$fromInt(currentImage.cropTop)),
 												$elm$html$Html$Events$onInput($author$project$ImageCurator$SetCropTop)
 											]),
 										_List_Nil)
@@ -8140,7 +8156,7 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 											[
 												$elm$html$Html$Attributes$type_('number'),
 												$elm$html$Html$Attributes$value(
-												$elm$core$String$fromInt(currentImage.crop_size)),
+												$elm$core$String$fromInt(currentImage.cropSize)),
 												$elm$html$Html$Events$onInput($author$project$ImageCurator$SetCropSize)
 											]),
 										_List_Nil)

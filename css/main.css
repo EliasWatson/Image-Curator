@@ -1,3 +1,12 @@
+@font-face {
+	font-family: Roboto;
+	src: url("../dist/roboto/Roboto-Regular.ttf");
+}
+
+body {
+	font-family: Roboto;
+}
+
 .button {
 	border: 1px solid gray;
 	border-radius: 3px;
@@ -32,6 +41,10 @@
 	flex-direction: column;
 }
 
+.workspace .properties > * {
+	margin-bottom: 5px;
+}
+
 .workspace .properties .filename {
 	text-align: center;
 	text-overflow: clip;
@@ -45,7 +58,6 @@
 
 .workspace .properties .crop-presets {
 	display: flex;
-	margin-bottom: 5px;
 }
 
 .workspace .properties .crop-presets .button {
