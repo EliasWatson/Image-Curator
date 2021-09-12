@@ -7,7 +7,7 @@ import Http
 
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, name, src, title, type_, placeholder, value, checked)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, stopPropagationOn)
 
 import Array exposing (Array)
 
@@ -28,7 +28,8 @@ canvasSize : number
 canvasSize = 1024
 
 type Msg
-    = GotImages (Result Http.Error (Array Image))
+    = NoOp
+    | GotImages (Result Http.Error (Array Image))
     | GotTexture (Maybe Texture)
     | UpdatedDatabase (Result Http.Error ())
     | SetCurrentImageStr String
@@ -43,6 +44,7 @@ type Msg
     | CropExtend
     | SaveProperties
     | AnimationFrame Float
+    | PressedKey String
 
 type Load a
     = Loading
@@ -86,6 +88,7 @@ viewNavigationBar model =
             [ type_ "number", placeholder "Image Index"
             , value (String.fromInt (model.currentImageIndex + 1))
             , onInput SetCurrentImageStr
+            , stopKeyPropagation
             ] []
         , viewButton [] NextImage (i [ class "fas fa-forward" ] [])
         ]
@@ -113,6 +116,7 @@ viewProperties model =
                     [ type_ "number"
                     , value (String.fromInt currentImage.cropLeft)
                     , onInput SetCropLeft
+                    , stopKeyPropagation
                     ] [] ]
                 ]
             , tr []
@@ -121,6 +125,7 @@ viewProperties model =
                     [ type_ "number"
                     , value (String.fromInt currentImage.cropTop)
                     , onInput SetCropTop
+                    , stopKeyPropagation
                     ] [] ]
                 ]
             , tr []
@@ -129,6 +134,7 @@ viewProperties model =
                     [ type_ "number"
                     , value (String.fromInt currentImage.cropSize)
                     , onInput SetCropSize
+                    , stopKeyPropagation
                     ] [] ]
                 ]
             ]
@@ -221,6 +227,7 @@ update msg model =
         currentImage = getCurrentImage model
     in
     case msg of
+        NoOp -> ( model, Cmd.none )
         GotImages (Ok images) ->
             (   { model
                 | status = Loaded images
@@ -330,6 +337,7 @@ update msg model =
             )
         SaveProperties -> ( model, updateDatabase <| getCurrentImage model )
         AnimationFrame dt -> ( model, Cmd.none )
+        PressedKey keyCodeString -> ( model, Cmd.none )
 
 updateDatabase : Image -> Cmd Msg
 updateDatabase image =
@@ -404,6 +412,10 @@ getCurrentImage model =
         Loading -> emptyImage
         Errored _ -> emptyImage
 
+stopKeyPropagation : Attribute Msg
+stopKeyPropagation =
+    stopPropagationOn "keydown" ( Json.Decode.succeed ( NoOp, True ) )
+
 emptyImage : Image
 emptyImage =
     { filename = ""
@@ -442,5 +454,8 @@ main =
         { init = \_ -> ( initialModel, initialCmd )
         , view = view
         , update = update
-        , subscriptions = \model -> onAnimationFrameDelta AnimationFrame
+        , subscriptions = \model -> Sub.batch
+            [ onAnimationFrameDelta AnimationFrame
+            , Browser.Events.onKeyPress ( Json.Decode.field "key" Json.Decode.string |> Json.Decode.map PressedKey )
+            ]
         }
