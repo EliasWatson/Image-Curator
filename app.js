@@ -6834,6 +6834,15 @@ var $author$project$ImageCurator$updateCurrentImageProperties = F2(
 				return model;
 		}
 	});
+var $author$project$ImageCurator$updateCurrentImageProcessed = function (model) {
+	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	return A2(
+		$author$project$ImageCurator$updateCurrentImageProperties,
+		model,
+		_Utils_update(
+			currentImage,
+			{processed: true}));
+};
 var $author$project$ImageCurator$UpdatedDatabase = function (a) {
 	return {$: 'UpdatedDatabase', a: a};
 };
@@ -6982,22 +6991,25 @@ var $author$project$ImageCurator$update = F2(
 			case 'SetCurrentImageStr':
 				var indexString = msg.a;
 				return _Utils_Tuple2(
-					A2(
-						$author$project$ImageCurator$updateCurrentImage,
-						model,
+					$author$project$ImageCurator$updateCurrentImageProcessed(
 						A2(
-							$elm$core$Maybe$withDefault,
-							model.currentImageIndex + 1,
-							$elm$core$String$toInt(indexString)) - 1),
-					$elm$core$Platform$Cmd$none);
+							$author$project$ImageCurator$updateCurrentImage,
+							model,
+							A2(
+								$elm$core$Maybe$withDefault,
+								model.currentImageIndex + 1,
+								$elm$core$String$toInt(indexString)) - 1)),
+					$author$project$ImageCurator$updateDatabase(currentImage));
 			case 'PrevImage':
 				return _Utils_Tuple2(
-					A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex - 1),
-					$elm$core$Platform$Cmd$none);
+					$author$project$ImageCurator$updateCurrentImageProcessed(
+						A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex - 1)),
+					$author$project$ImageCurator$updateDatabase(currentImage));
 			case 'NextImage':
 				return _Utils_Tuple2(
-					A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1),
-					$elm$core$Platform$Cmd$none);
+					$author$project$ImageCurator$updateCurrentImageProcessed(
+						A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1)),
+					$author$project$ImageCurator$updateDatabase(currentImage));
 			case 'ToggleApproved':
 				return _Utils_Tuple2(
 					A2(
@@ -7144,12 +7156,14 @@ var $author$project$ImageCurator$update = F2(
 							$elm$core$Platform$Cmd$none);
 					case 'a':
 						return _Utils_Tuple2(
-							A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex - 1),
-							$elm$core$Platform$Cmd$none);
+							$author$project$ImageCurator$updateCurrentImageProcessed(
+								A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex - 1)),
+							$author$project$ImageCurator$updateDatabase(currentImage));
 					case 'd':
 						return _Utils_Tuple2(
-							A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1),
-							$elm$core$Platform$Cmd$none);
+							$author$project$ImageCurator$updateCurrentImageProcessed(
+								A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1)),
+							$author$project$ImageCurator$updateDatabase(currentImage));
 					case ' ':
 						return _Utils_Tuple2(
 							A2(

@@ -329,16 +329,16 @@ update msg model =
             )
         UpdatedDatabase _ -> ( model, Cmd.none )
         SetCurrentImageStr indexString ->
-            ( updateCurrentImage
+            ( updateCurrentImageProcessed <| updateCurrentImage
                 model
                 ((Maybe.withDefault
                     (model.currentImageIndex + 1)
                     (String.toInt indexString)) - 1
                 )
-            , Cmd.none
+            , updateDatabase currentImage
             )
-        PrevImage -> ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
-        NextImage -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
+        PrevImage -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex - 1), updateDatabase currentImage )
+        NextImage -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex + 1), updateDatabase currentImage )
         ToggleApproved ->
             ( updateCurrentImageProperties
                 model
@@ -402,8 +402,8 @@ update msg model =
         KeyDown "ArrowDown" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
         KeyDown "-" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - 1 }, Cmd.none )
         KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
-        KeyDown "a" -> ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
-        KeyDown "d" -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
+        KeyDown "a" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex - 1), updateDatabase currentImage )
+        KeyDown "d" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex + 1), updateDatabase currentImage )
         KeyDown " " -> ( updateCurrentImageProperties model { currentImage | processed = not currentImage.processed }, Cmd.none )
         KeyDown "q" -> ( updateCurrentImageProperties model { currentImage | approved = not currentImage.approved }, Cmd.none )
         KeyDown "e" -> ( model, sendMsg CropExtend )
@@ -474,6 +474,13 @@ updateCurrentImageProperties model image =
             }
         Loading -> model
         Errored _ -> model
+
+updateCurrentImageProcessed : Model -> Model
+updateCurrentImageProcessed model =
+    let
+        currentImage = getCurrentImage model
+    in
+    updateCurrentImageProperties model { currentImage | processed = True }
 
 getCurrentImage : Model -> Image
 getCurrentImage model =
