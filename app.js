@@ -7131,6 +7131,14 @@ var $author$project$ImageCurator$update = F2(
 									currentImage,
 									{cropSize: currentImage.cropSize + 1})),
 							$elm$core$Platform$Cmd$none);
+					case 'a':
+						return _Utils_Tuple2(
+							A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex - 1),
+							$elm$core$Platform$Cmd$none);
+					case 'd':
+						return _Utils_Tuple2(
+							A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1),
+							$elm$core$Platform$Cmd$none);
 					default:
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
