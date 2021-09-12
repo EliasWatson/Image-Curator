@@ -337,22 +337,14 @@ update msg model =
             )
         SaveProperties -> ( model, updateDatabase <| getCurrentImage model )
         AnimationFrame dt -> ( model, Cmd.none )
-        KeyDown "ArrowLeft" ->
-            ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - 1 }, Cmd.none )
-        KeyDown "ArrowRight" ->
-            ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + 1 }, Cmd.none )
-        KeyDown "ArrowUp" ->
-            ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - 1 }, Cmd.none )
-        KeyDown "ArrowDown" ->
-            ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
-        KeyDown "-" ->
-            ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - 1 }, Cmd.none )
-        KeyDown "+" ->
-            ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
-        KeyDown "a" ->
-            ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
-        KeyDown "d" ->
-            ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
+        KeyDown "ArrowLeft" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - 1 }, Cmd.none )
+        KeyDown "ArrowRight" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + 1 }, Cmd.none )
+        KeyDown "ArrowUp" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - 1 }, Cmd.none )
+        KeyDown "ArrowDown" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
+        KeyDown "-" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - 1 }, Cmd.none )
+        KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
+        KeyDown "a" -> ( updateCurrentImage model (model.currentImageIndex - 1), Cmd.none )
+        KeyDown "d" -> ( updateCurrentImage model (model.currentImageIndex + 1), Cmd.none )
         KeyDown _ -> ( model, Cmd.none )
 
 updateDatabase : Image -> Cmd Msg
