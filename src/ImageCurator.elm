@@ -34,6 +34,7 @@ type Msg
     | SetCurrentImageStr String
     | PrevImage
     | NextImage
+    | ToggleProcessed
     | ToggleApproved
     | SetCropLeft String
     | SetCropTop String
@@ -106,6 +107,7 @@ viewProperties model =
     in
     div [ class "properties" ]
         [ div [ class "filename" ] [ text (getCurrentImage model).filename ]
+        , viewCheckbox ToggleProcessed (getCurrentImage model).processed "Processed"
         , viewCheckbox ToggleApproved (getCurrentImage model).approved "Approved"
         , table [ class "crop-table" ]
             [ tr []
@@ -277,6 +279,12 @@ update msg model =
             ( updateCurrentImageProperties
                 model
                 { currentImage | approved = not currentImage.approved }
+            , Cmd.none
+            )
+        ToggleProcessed ->
+            ( updateCurrentImageProperties
+                model
+                { currentImage | processed = not currentImage.processed }
             , Cmd.none
             )
         SetCropLeft numString ->

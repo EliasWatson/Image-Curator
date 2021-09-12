@@ -6719,6 +6719,15 @@ var $author$project$ImageCurator$update = F2(
 							currentImage,
 							{approved: !currentImage.approved})),
 					$elm$core$Platform$Cmd$none);
+			case 'ToggleProcessed':
+				return _Utils_Tuple2(
+					A2(
+						$author$project$ImageCurator$updateCurrentImageProperties,
+						model,
+						_Utils_update(
+							currentImage,
+							{processed: !currentImage.processed})),
+					$elm$core$Platform$Cmd$none);
 			case 'SetCropLeft':
 				var numString = msg.a;
 				var newImage = _Utils_update(
@@ -8015,6 +8024,7 @@ var $author$project$ImageCurator$SetCropTop = function (a) {
 	return {$: 'SetCropTop', a: a};
 };
 var $author$project$ImageCurator$ToggleApproved = {$: 'ToggleApproved'};
+var $author$project$ImageCurator$ToggleProcessed = {$: 'ToggleProcessed'};
 var $elm$html$Html$table = _VirtualDom_node('table');
 var $elm$html$Html$td = _VirtualDom_node('td');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
@@ -8069,6 +8079,11 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 						$elm$html$Html$text(
 						$author$project$ImageCurator$getCurrentImage(model).filename)
 					])),
+				A3(
+				$author$project$ImageCurator$viewCheckbox,
+				$author$project$ImageCurator$ToggleProcessed,
+				$author$project$ImageCurator$getCurrentImage(model).processed,
+				'Processed'),
 				A3(
 				$author$project$ImageCurator$viewCheckbox,
 				$author$project$ImageCurator$ToggleApproved,
