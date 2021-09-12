@@ -6151,9 +6151,9 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$ImageCurator$Image = F5(
-	function (filename, approved, cropLeft, cropTop, cropSize) {
-		return {approved: approved, cropLeft: cropLeft, cropSize: cropSize, cropTop: cropTop, filename: filename};
+var $author$project$ImageCurator$Image = F6(
+	function (filename, processed, approved, cropLeft, cropTop, cropSize) {
+		return {approved: approved, cropLeft: cropLeft, cropSize: cropSize, cropTop: cropTop, filename: filename, processed: processed};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
@@ -6185,9 +6185,13 @@ var $author$project$ImageCurator$imageDecoder = A3(
 				$elm$json$Json$Decode$bool,
 				A3(
 					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-					'filename',
-					$elm$json$Json$Decode$string,
-					$elm$json$Json$Decode$succeed($author$project$ImageCurator$Image))))));
+					'processed',
+					$elm$json$Json$Decode$bool,
+					A3(
+						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+						'filename',
+						$elm$json$Json$Decode$string,
+						$elm$json$Json$Decode$succeed($author$project$ImageCurator$Image)))))));
 var $author$project$ImageCurator$initialCmd = $elm$http$Http$get(
 	{
 		expect: A2(
@@ -6362,7 +6366,7 @@ var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
 		return {height: data.height, width: data.width};
 	}
 };
-var $author$project$ImageCurator$emptyImage = {approved: false, cropLeft: 0, cropSize: 0, cropTop: 0, filename: ''};
+var $author$project$ImageCurator$emptyImage = {approved: false, cropLeft: 0, cropSize: 0, cropTop: 0, filename: '', processed: false};
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
@@ -6588,6 +6592,9 @@ var $author$project$ImageCurator$imageEncode = function (image) {
 				_Utils_Tuple2(
 				'filename',
 				$elm$json$Json$Encode$string(image.filename)),
+				_Utils_Tuple2(
+				'processed',
+				$elm$json$Json$Encode$bool(image.processed)),
 				_Utils_Tuple2(
 				'approved',
 				$elm$json$Json$Encode$bool(image.approved)),

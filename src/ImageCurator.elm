@@ -50,6 +50,7 @@ type Load a
 
 type alias Image =
     { filename : String
+    , processed : Bool
     , approved : Bool
     , cropLeft : Int
     , cropTop : Int
@@ -336,6 +337,7 @@ imageEncode : Image -> Json.Encode.Value
 imageEncode image =
     Json.Encode.object
         [ ( "filename", Json.Encode.string image.filename )
+        , ( "processed", Json.Encode.bool image.processed )
         , ( "approved", Json.Encode.bool image.approved )
         , ( "crop_left", Json.Encode.int image.cropLeft )
         , ( "crop_top", Json.Encode.int image.cropTop )
@@ -346,6 +348,7 @@ imageDecoder : Decoder Image
 imageDecoder =
     succeed Image
         |> required "filename" string
+        |> required "processed" bool
         |> required "approved" bool
         |> required "crop_left" int
         |> required "crop_top" int
@@ -398,6 +401,7 @@ getCurrentImage model =
 emptyImage : Image
 emptyImage =
     { filename = ""
+    , processed = False
     , approved = False
     , cropLeft = 0
     , cropTop = 0
