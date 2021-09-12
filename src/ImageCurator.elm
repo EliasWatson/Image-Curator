@@ -345,6 +345,10 @@ update msg model =
             ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - 1 }, Cmd.none )
         KeyDown "ArrowDown" ->
             ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
+        KeyDown "-" ->
+            ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - 1 }, Cmd.none )
+        KeyDown "+" ->
+            ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
         KeyDown _ -> ( model, Cmd.none )
 
 updateDatabase : Image -> Cmd Msg
