@@ -4650,8 +4650,8 @@ var $elm$core$Basics$LT = {$: 'LT'};
 var $author$project$ImageCurator$AnimationFrame = function (a) {
 	return {$: 'AnimationFrame', a: a};
 };
-var $author$project$ImageCurator$PressedKey = function (a) {
-	return {$: 'PressedKey', a: a};
+var $author$project$ImageCurator$KeyDown = function (a) {
+	return {$: 'KeyDown', a: a};
 };
 var $elm$core$Basics$apR = F2(
 	function (x, f) {
@@ -6623,7 +6623,7 @@ var $elm$browser$Browser$Events$on = F3(
 		return $elm$browser$Browser$Events$subscription(
 			A3($elm$browser$Browser$Events$MySub, node, name, decoder));
 	});
-var $elm$browser$Browser$Events$onKeyPress = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keypress');
+var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keydown');
 var $author$project$ImageCurator$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
@@ -7076,8 +7076,46 @@ var $author$project$ImageCurator$update = F2(
 				var dt = msg.a;
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			default:
-				var keyCodeString = msg.a;
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				switch (msg.a) {
+					case 'ArrowLeft':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{cropLeft: currentImage.cropLeft - 1})),
+							$elm$core$Platform$Cmd$none);
+					case 'ArrowRight':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{cropLeft: currentImage.cropLeft + 1})),
+							$elm$core$Platform$Cmd$none);
+					case 'ArrowUp':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{cropTop: currentImage.cropTop - 1})),
+							$elm$core$Platform$Cmd$none);
+					case 'ArrowDown':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{cropTop: currentImage.cropTop + 1})),
+							$elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -8536,10 +8574,10 @@ var $author$project$ImageCurator$main = $elm$browser$Browser$element(
 				_List_fromArray(
 					[
 						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$ImageCurator$AnimationFrame),
-						$elm$browser$Browser$Events$onKeyPress(
+						$elm$browser$Browser$Events$onKeyDown(
 						A2(
 							$elm$json$Json$Decode$map,
-							$author$project$ImageCurator$PressedKey,
+							$author$project$ImageCurator$KeyDown,
 							A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)))
 					]));
 		},

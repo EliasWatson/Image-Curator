@@ -44,7 +44,7 @@ type Msg
     | CropExtend
     | SaveProperties
     | AnimationFrame Float
-    | PressedKey String
+    | KeyDown String
 
 type Load a
     = Loading
@@ -337,7 +337,15 @@ update msg model =
             )
         SaveProperties -> ( model, updateDatabase <| getCurrentImage model )
         AnimationFrame dt -> ( model, Cmd.none )
-        PressedKey keyCodeString -> ( model, Cmd.none )
+        KeyDown "ArrowLeft" ->
+            ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - 1 }, Cmd.none )
+        KeyDown "ArrowRight" ->
+            ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + 1 }, Cmd.none )
+        KeyDown "ArrowUp" ->
+            ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - 1 }, Cmd.none )
+        KeyDown "ArrowDown" ->
+            ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
+        KeyDown _ -> ( model, Cmd.none )
 
 updateDatabase : Image -> Cmd Msg
 updateDatabase image =
@@ -456,6 +464,6 @@ main =
         , update = update
         , subscriptions = \model -> Sub.batch
             [ onAnimationFrameDelta AnimationFrame
-            , Browser.Events.onKeyPress ( Json.Decode.field "key" Json.Decode.string |> Json.Decode.map PressedKey )
+            , Browser.Events.onKeyDown ( Json.Decode.field "key" Json.Decode.string |> Json.Decode.map KeyDown )
             ]
         }
