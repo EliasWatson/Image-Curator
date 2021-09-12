@@ -19,7 +19,7 @@ import Json.Decode.Pipeline exposing (optional, required)
 import Canvas exposing (rect, shapes, texture)
 import Canvas.Texture as Texture exposing (Texture)
 import Canvas.Settings exposing (fill, stroke)
-import Canvas.Settings.Advanced exposing (rotate, transform, translate, scale)
+import Canvas.Settings.Advanced exposing (rotate, transform, translate, scale, alpha)
 import Color
 
 apiUrl : String
@@ -61,12 +61,18 @@ type alias Image =
     , cropSize : Int
     }
 
+type ImageExtendAxis
+    = None
+    | Vertical
+    | Horizontal
+
 type alias TextureProperties =
     { scale : Float
     , width : Int
     , height : Int
     , leftOffset : Int
     , topOffset : Int
+    , extendAxis : ImageExtendAxis
     }
 
 type alias Model =
@@ -159,17 +165,14 @@ viewImageViewer model =
             , textures = [ model.currentTextureSource ]
             }
             []
-            [ canvasClearScreen
-            , canvasRenderImage model
-            , canvasRenderCrop model
-            ]
+            (( canvasClearScreen :: canvasRenderImage model ) ++ [ canvasRenderCrop model ])
         ]
 
 canvasClearScreen : Canvas.Renderable
 canvasClearScreen =
-    shapes [ fill Color.white ] [ rect ( 0, 0 ) canvasSize canvasSize ]
+    shapes [ fill Color.black ] [ rect ( 0, 0 ) canvasSize canvasSize ]
 
-canvasRenderImage : Model -> Canvas.Renderable
+canvasRenderImage : Model -> List Canvas.Renderable
 canvasRenderImage model =
     case model.currentTexture of
         Loaded texture_ ->
@@ -178,7 +181,7 @@ canvasRenderImage model =
                 leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
                 topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
             in
-                texture
+                ( texture
                     [ transform
                         [ translate leftShift topShift
                         , scale scale_ scale_
@@ -186,8 +189,59 @@ canvasRenderImage model =
                     ]
                     ( 0, 0 )
                     texture_
-        Loading -> shapes [] []
-        Errored _ -> shapes [] []
+                ) ::
+                case model.currentTextureProperties.extendAxis of
+                    Horizontal ->
+                        [ texture
+                            [ transform
+                                [ translate
+                                    leftShift
+                                    topShift
+                                , scale ( negate scale_ ) scale_
+                                ]
+                            , alpha 0.5
+                            ]
+                            ( 0, 0 )
+                            texture_
+                        , texture
+                            [ transform
+                                [ translate
+                                    ( leftShift + ( (toFloat model.currentTextureProperties.width * 2) * scale_ ) )
+                                    topShift
+                                , scale ( negate scale_ ) scale_
+                                ]
+                            , alpha 0.5
+                            ]
+                            ( 0, 0 )
+                            texture_
+                        ]
+                    Vertical ->
+                        [ texture
+                            [ transform
+                                [ translate
+                                    leftShift
+                                    topShift
+                                , scale scale_ ( negate scale_ )
+                                ]
+                            , alpha 0.5
+                            ]
+                            ( 0, 0 )
+                            texture_
+                        , texture
+                            [ transform
+                                [ translate
+                                    leftShift
+                                    ( topShift + ( (toFloat model.currentTextureProperties.height * 2) * scale_ ) )
+                                , scale scale_ ( negate scale_ )
+                                ]
+                            , alpha 0.5
+                            ]
+                            ( 0, 0 )
+                            texture_
+                        ]
+                    None -> []
+        Loading -> []
+        Errored _ -> []
 
 canvasRenderCrop : Model -> Canvas.Renderable
 canvasRenderCrop model =
@@ -265,6 +319,10 @@ update msg model =
                     , height = round dimensions.height
                     , leftOffset = floor ((maxDim - dimensions.width) / 2)
                     , topOffset = floor ((maxDim - dimensions.height) / 2)
+                    , extendAxis =
+                        if dimensions.width < dimensions.height then Horizontal
+                        else if dimensions.height < dimensions.width then Vertical
+                        else None
                     }
                 }
             , Cmd.none
@@ -457,6 +515,7 @@ initialModel =
         , height = 0
         , leftOffset = 0
         , topOffset = 0
+        , extendAxis = None
         }
     }
 

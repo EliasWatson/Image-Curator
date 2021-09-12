@@ -6208,6 +6208,7 @@ var $author$project$ImageCurator$GotTexture = function (a) {
 	return {$: 'GotTexture', a: a};
 };
 var $author$project$ImageCurator$Loading = {$: 'Loading'};
+var $author$project$ImageCurator$None = {$: 'None'};
 var $joakin$elm_canvas$Canvas$Internal$Texture$TSImageUrl = F2(
 	function (a, b) {
 		return {$: 'TSImageUrl', a: a, b: b};
@@ -6219,7 +6220,7 @@ var $joakin$elm_canvas$Canvas$Texture$loadFromImageUrl = F2(
 var $author$project$ImageCurator$initialModel = {
 	currentImageIndex: 0,
 	currentTexture: $author$project$ImageCurator$Loading,
-	currentTextureProperties: {height: 0, leftOffset: 0, scale: 1.0, topOffset: 0, width: 0},
+	currentTextureProperties: {extendAxis: $author$project$ImageCurator$None, height: 0, leftOffset: 0, scale: 1.0, topOffset: 0, width: 0},
 	currentTextureSource: A2($joakin$elm_canvas$Canvas$Texture$loadFromImageUrl, 'img/loading.png', $author$project$ImageCurator$GotTexture),
 	status: $author$project$ImageCurator$Loading
 };
@@ -6629,9 +6630,11 @@ var $author$project$ImageCurator$CropExtend = {$: 'CropExtend'};
 var $author$project$ImageCurator$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
+var $author$project$ImageCurator$Horizontal = {$: 'Horizontal'};
 var $author$project$ImageCurator$Loaded = function (a) {
 	return {$: 'Loaded', a: a};
 };
+var $author$project$ImageCurator$Vertical = {$: 'Vertical'};
 var $author$project$ImageCurator$canvasSize = 1024;
 var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
 	if (texture.$ === 'TImage') {
@@ -6964,6 +6967,7 @@ var $author$project$ImageCurator$update = F2(
 							{
 								currentTexture: $author$project$ImageCurator$Loaded(texture),
 								currentTextureProperties: {
+									extendAxis: (_Utils_cmp(dimensions.width, dimensions.height) < 0) ? $author$project$ImageCurator$Horizontal : ((_Utils_cmp(dimensions.height, dimensions.width) < 0) ? $author$project$ImageCurator$Vertical : $author$project$ImageCurator$None),
 									height: $elm$core$Basics$round(dimensions.height),
 									leftOffset: $elm$core$Basics$floor((maxDim - dimensions.width) / 2),
 									scale: scale,
@@ -7190,6 +7194,11 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $avh4$elm_color$Color$RgbaSpace = F4(
+	function (a, b, c, d) {
+		return {$: 'RgbaSpace', a: a, b: b, c: c, d: d};
+	});
+var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
 var $joakin$elm_canvas$Canvas$Internal$Canvas$Fill = function (a) {
 	return {$: 'Fill', a: a};
 };
@@ -7336,16 +7345,11 @@ var $joakin$elm_canvas$Canvas$shapes = F2(
 					drawable: $joakin$elm_canvas$Canvas$Internal$Canvas$DrawableShapes(ss)
 				}));
 	});
-var $avh4$elm_color$Color$RgbaSpace = F4(
-	function (a, b, c, d) {
-		return {$: 'RgbaSpace', a: a, b: b, c: c, d: d};
-	});
-var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
 var $author$project$ImageCurator$canvasClearScreen = A2(
 	$joakin$elm_canvas$Canvas$shapes,
 	_List_fromArray(
 		[
-			$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$white)
+			$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$black)
 		]),
 	_List_fromArray(
 		[
@@ -7380,6 +7384,34 @@ var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 				cropSize)
 			]));
 };
+var $joakin$elm_canvas$Canvas$Internal$Canvas$SettingCommand = function (a) {
+	return {$: 'SettingCommand', a: a};
+};
+var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$field = F2(
+	function (name, value) {
+		return $elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'type',
+					$elm$json$Json$Encode$string('field')),
+					_Utils_Tuple2(
+					'name',
+					$elm$json$Json$Encode$string(name)),
+					_Utils_Tuple2('value', value)
+				]));
+	});
+var $elm$json$Json$Encode$float = _Json_wrap;
+var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$globalAlpha = function (alpha) {
+	return A2(
+		$joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$field,
+		'globalAlpha',
+		$elm$json$Json$Encode$float(alpha));
+};
+var $joakin$elm_canvas$Canvas$Settings$Advanced$alpha = function (a) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingCommand(
+		$joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$globalAlpha(a));
+};
 var $joakin$elm_canvas$Canvas$Settings$Advanced$Scale = F2(
 	function (a, b) {
 		return {$: 'Scale', a: a, b: b};
@@ -7404,7 +7436,6 @@ var $joakin$elm_canvas$Canvas$texture = F3(
 var $joakin$elm_canvas$Canvas$Internal$Canvas$SettingCommands = function (a) {
 	return {$: 'SettingCommands', a: a};
 };
-var $elm$json$Json$Encode$float = _Json_wrap;
 var $elm$json$Json$Encode$list = F2(
 	function (func, entries) {
 		return _Json_wrap(
@@ -7518,23 +7549,96 @@ var $author$project$ImageCurator$canvasRenderImage = function (model) {
 			var scale_ = model.currentTextureProperties.scale;
 			var topShift = model.currentTextureProperties.topOffset * scale_;
 			var leftShift = model.currentTextureProperties.leftOffset * scale_;
-			return A3(
-				$joakin$elm_canvas$Canvas$texture,
-				_List_fromArray(
-					[
-						$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-						_List_fromArray(
-							[
-								A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
-								A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
-							]))
-					]),
-				_Utils_Tuple2(0, 0),
-				texture_);
+			return A2(
+				$elm$core$List$cons,
+				A3(
+					$joakin$elm_canvas$Canvas$texture,
+					_List_fromArray(
+						[
+							$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+							_List_fromArray(
+								[
+									A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+									A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
+								]))
+						]),
+					_Utils_Tuple2(0, 0),
+					texture_),
+				function () {
+					var _v1 = model.currentTextureProperties.extendAxis;
+					switch (_v1.$) {
+						case 'Horizontal':
+							return _List_fromArray(
+								[
+									A3(
+									$joakin$elm_canvas$Canvas$texture,
+									_List_fromArray(
+										[
+											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+											_List_fromArray(
+												[
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
+												])),
+											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
+										]),
+									_Utils_Tuple2(0, 0),
+									texture_),
+									A3(
+									$joakin$elm_canvas$Canvas$texture,
+									_List_fromArray(
+										[
+											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+											_List_fromArray(
+												[
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift + ((model.currentTextureProperties.width * 2) * scale_), topShift),
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
+												])),
+											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
+										]),
+									_Utils_Tuple2(0, 0),
+									texture_)
+								]);
+						case 'Vertical':
+							return _List_fromArray(
+								[
+									A3(
+									$joakin$elm_canvas$Canvas$texture,
+									_List_fromArray(
+										[
+											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+											_List_fromArray(
+												[
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
+												])),
+											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
+										]),
+									_Utils_Tuple2(0, 0),
+									texture_),
+									A3(
+									$joakin$elm_canvas$Canvas$texture,
+									_List_fromArray(
+										[
+											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+											_List_fromArray(
+												[
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift + ((model.currentTextureProperties.height * 2) * scale_)),
+													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
+												])),
+											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
+										]),
+									_Utils_Tuple2(0, 0),
+									texture_)
+								]);
+						default:
+							return _List_Nil;
+					}
+				}());
 		case 'Loading':
-			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
+			return _List_Nil;
 		default:
-			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
+			return _List_Nil;
 	}
 };
 var $elm$html$Html$canvas = _VirtualDom_node('canvas');
@@ -7812,7 +7916,6 @@ var $joakin$elm_canvas$Canvas$renderShape = F2(
 							cmds)));
 		}
 	});
-var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
 var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$NonZero = {$: 'NonZero'};
 var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$fillRuleToString = function (fillRule) {
 	if (fillRule.$ === 'NonZero') {
@@ -7831,20 +7934,6 @@ var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$fill = function (fil
 				$joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$fillRuleToString(fillRule))
 			]));
 };
-var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$field = F2(
-	function (name, value) {
-		return $elm$json$Json$Encode$object(
-			_List_fromArray(
-				[
-					_Utils_Tuple2(
-					'type',
-					$elm$json$Json$Encode$string('field')),
-					_Utils_Tuple2(
-					'name',
-					$elm$json$Json$Encode$string(name)),
-					_Utils_Tuple2('value', value)
-				]));
-	});
 var $elm$core$String$concat = function (strings) {
 	return A2($elm$core$String$join, '', strings);
 };
@@ -8246,12 +8335,15 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 					width: $author$project$ImageCurator$canvasSize
 				},
 				_List_Nil,
-				_List_fromArray(
-					[
+				_Utils_ap(
+					A2(
+						$elm$core$List$cons,
 						$author$project$ImageCurator$canvasClearScreen,
-						$author$project$ImageCurator$canvasRenderImage(model),
-						$author$project$ImageCurator$canvasRenderCrop(model)
-					]))
+						$author$project$ImageCurator$canvasRenderImage(model)),
+					_List_fromArray(
+						[
+							$author$project$ImageCurator$canvasRenderCrop(model)
+						])))
 			]));
 };
 var $author$project$ImageCurator$SaveProperties = {$: 'SaveProperties'};
