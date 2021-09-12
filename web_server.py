@@ -1,7 +1,16 @@
 import json
 import os
+import argparse
 from flask import Flask, jsonify, send_file, request
 from flask_cors import CORS
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--imgdir", type=str, required=True)
+parser.add_argument("--dbpath", type=str, required=True)
+args = parser.parse_args()
+
+image_dir = args.imgdir
+db_path = args.dbpath
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -33,8 +42,7 @@ class ImageDatabase:
         with open(self.save_path, "w") as f:
             json.dump(self.images, f)
 
-image_dir = "landscape_wallpapers/images"
-db = ImageDatabase("database.json")
+db = ImageDatabase(db_path)
 db.discover_images(image_dir)
 db.save_to_file()
 
