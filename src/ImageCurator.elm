@@ -52,6 +52,13 @@ type Load a
     | Loaded a
     | Errored String
 
+type ExtendMode
+    = MirrorExtend
+    | StretchExtend
+    -- | SmearExtend
+    | WhiteExtend
+    | BlackExtend
+
 type alias Image =
     { filename : String
     , processed : Bool
@@ -59,6 +66,7 @@ type alias Image =
     , cropLeft : Int
     , cropTop : Int
     , cropSize : Int
+    , cropExtend : ExtendMode
     }
 
 type ImageExtendAxis
@@ -431,17 +439,39 @@ imageEncode image =
         , ( "crop_left", Json.Encode.int image.cropLeft )
         , ( "crop_top", Json.Encode.int image.cropTop )
         , ( "crop_size", Json.Encode.int image.cropSize )
+        , ( "crop_extend", Json.Encode.string <| extendModeEncoder image.cropExtend )
         ]
+
+extendModeEncoder : ExtendMode -> String
+extendModeEncoder mode =
+    case mode of
+        MirrorExtend -> "mirror"
+        StretchExtend -> "stretch"
+        WhiteExtend -> "white"
+        BlackExtend -> "black"
 
 imageDecoder : Decoder Image
 imageDecoder =
     succeed Image
         |> required "filename" string
-        |> required "processed" bool
-        |> required "approved" bool
-        |> required "crop_left" int
-        |> required "crop_top" int
-        |> required "crop_size" int
+        |> optional "processed" bool False
+        |> optional "approved" bool False
+        |> optional "crop_left" int 0
+        |> optional "crop_top" int 0
+        |> optional "crop_size" int 0
+        |> optional "crop_extend" extendModeDecoder MirrorExtend
+
+extendModeDecoder : Decoder ExtendMode
+extendModeDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen (\str ->
+            case str of
+                "mirror" -> Json.Decode.succeed MirrorExtend
+                "stretch" -> Json.Decode.succeed StretchExtend
+                "white" -> Json.Decode.succeed WhiteExtend
+                "black" -> Json.Decode.succeed BlackExtend
+                _ -> Json.Decode.fail <| "Unknown extend method: " ++ str
+        )
 
 updateCurrentTextureSource : Model -> Model
 updateCurrentTextureSource model =
@@ -511,6 +541,7 @@ emptyImage =
     , cropLeft = 0
     , cropTop = 0
     , cropSize = 0
+    , cropExtend = BlackExtend
     }
 
 initialModel : Model

@@ -6156,13 +6156,84 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$ImageCurator$Image = F6(
-	function (filename, processed, approved, cropLeft, cropTop, cropSize) {
-		return {approved: approved, cropLeft: cropLeft, cropSize: cropSize, cropTop: cropTop, filename: filename, processed: processed};
+var $author$project$ImageCurator$Image = F7(
+	function (filename, processed, approved, cropLeft, cropTop, cropSize, cropExtend) {
+		return {approved: approved, cropExtend: cropExtend, cropLeft: cropLeft, cropSize: cropSize, cropTop: cropTop, filename: filename, processed: processed};
 	});
+var $author$project$ImageCurator$MirrorExtend = {$: 'MirrorExtend'};
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $author$project$ImageCurator$BlackExtend = {$: 'BlackExtend'};
+var $author$project$ImageCurator$StretchExtend = {$: 'StretchExtend'};
+var $author$project$ImageCurator$WhiteExtend = {$: 'WhiteExtend'};
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$ImageCurator$extendModeDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	function (str) {
+		switch (str) {
+			case 'mirror':
+				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$MirrorExtend);
+			case 'stretch':
+				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$StretchExtend);
+			case 'white':
+				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$WhiteExtend);
+			case 'black':
+				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$BlackExtend);
+			default:
+				return $elm$json$Json$Decode$fail('Unknown extend method: ' + str);
+		}
+	},
+	$elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = $elm$json$Json$Decode$map2($elm$core$Basics$apR);
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder = F3(
+	function (pathDecoder, valDecoder, fallback) {
+		var nullOr = function (decoder) {
+			return $elm$json$Json$Decode$oneOf(
+				_List_fromArray(
+					[
+						decoder,
+						$elm$json$Json$Decode$null(fallback)
+					]));
+		};
+		var handleResult = function (input) {
+			var _v0 = A2($elm$json$Json$Decode$decodeValue, pathDecoder, input);
+			if (_v0.$ === 'Ok') {
+				var rawValue = _v0.a;
+				var _v1 = A2(
+					$elm$json$Json$Decode$decodeValue,
+					nullOr(valDecoder),
+					rawValue);
+				if (_v1.$ === 'Ok') {
+					var finalResult = _v1.a;
+					return $elm$json$Json$Decode$succeed(finalResult);
+				} else {
+					var finalErr = _v1.a;
+					return $elm$json$Json$Decode$fail(
+						$elm$json$Json$Decode$errorToString(finalErr));
+				}
+			} else {
+				return $elm$json$Json$Decode$succeed(fallback);
+			}
+		};
+		return A2($elm$json$Json$Decode$andThen, handleResult, $elm$json$Json$Decode$value);
+	});
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional = F4(
+	function (key, valDecoder, fallback, decoder) {
+		return A2(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder,
+				A2($elm$json$Json$Decode$field, key, $elm$json$Json$Decode$value),
+				valDecoder,
+				fallback),
+			decoder);
+	});
 var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
 	function (key, valDecoder, decoder) {
 		return A2(
@@ -6170,32 +6241,41 @@ var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
 			A2($elm$json$Json$Decode$field, key, valDecoder),
 			decoder);
 	});
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$ImageCurator$imageDecoder = A3(
-	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-	'crop_size',
-	$elm$json$Json$Decode$int,
-	A3(
-		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-		'crop_top',
+var $author$project$ImageCurator$imageDecoder = A4(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+	'crop_extend',
+	$author$project$ImageCurator$extendModeDecoder,
+	$author$project$ImageCurator$MirrorExtend,
+	A4(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+		'crop_size',
 		$elm$json$Json$Decode$int,
-		A3(
-			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-			'crop_left',
+		0,
+		A4(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+			'crop_top',
 			$elm$json$Json$Decode$int,
-			A3(
-				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-				'approved',
-				$elm$json$Json$Decode$bool,
-				A3(
-					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-					'processed',
+			0,
+			A4(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+				'crop_left',
+				$elm$json$Json$Decode$int,
+				0,
+				A4(
+					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+					'approved',
 					$elm$json$Json$Decode$bool,
-					A3(
-						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-						'filename',
-						$elm$json$Json$Decode$string,
-						$elm$json$Json$Decode$succeed($author$project$ImageCurator$Image)))))));
+					false,
+					A4(
+						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+						'processed',
+						$elm$json$Json$Decode$bool,
+						false,
+						A3(
+							$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+							'filename',
+							$elm$json$Json$Decode$string,
+							$elm$json$Json$Decode$succeed($author$project$ImageCurator$Image))))))));
 var $author$project$ImageCurator$initialCmd = $elm$http$Http$get(
 	{
 		expect: A2(
@@ -6645,7 +6725,7 @@ var $joakin$elm_canvas$Canvas$Texture$dimensions = function (texture) {
 		return {height: data.height, width: data.width};
 	}
 };
-var $author$project$ImageCurator$emptyImage = {approved: false, cropLeft: 0, cropSize: 0, cropTop: 0, filename: '', processed: false};
+var $author$project$ImageCurator$emptyImage = {approved: false, cropExtend: $author$project$ImageCurator$BlackExtend, cropLeft: 0, cropSize: 0, cropTop: 0, filename: '', processed: false};
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
@@ -6864,6 +6944,18 @@ var $elm$http$Http$expectWhatever = function (toMsg) {
 			}));
 };
 var $elm$json$Json$Encode$bool = _Json_wrap;
+var $author$project$ImageCurator$extendModeEncoder = function (mode) {
+	switch (mode.$) {
+		case 'MirrorExtend':
+			return 'mirror';
+		case 'StretchExtend':
+			return 'stretch';
+		case 'WhiteExtend':
+			return 'white';
+		default:
+			return 'black';
+	}
+};
 var $elm$json$Json$Encode$int = _Json_wrap;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
@@ -6900,7 +6992,11 @@ var $author$project$ImageCurator$imageEncode = function (image) {
 				$elm$json$Json$Encode$int(image.cropTop)),
 				_Utils_Tuple2(
 				'crop_size',
-				$elm$json$Json$Encode$int(image.cropSize))
+				$elm$json$Json$Encode$int(image.cropSize)),
+				_Utils_Tuple2(
+				'crop_extend',
+				$elm$json$Json$Encode$string(
+					$author$project$ImageCurator$extendModeEncoder(image.cropExtend)))
 			]));
 };
 var $elm$http$Http$jsonBody = function (value) {
@@ -8243,10 +8339,8 @@ var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $joakin$elm_canvas$Canvas$Internal$Texture$TImage = function (a) {
 	return {$: 'TImage', a: a};
 };
-var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
 var $elm$json$Json$Decode$map3 = _Json_map3;
-var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $joakin$elm_canvas$Canvas$Internal$Texture$decodeTextureImage = A2(
 	$elm$json$Json$Decode$andThen,
 	function (image) {
