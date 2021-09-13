@@ -15,6 +15,15 @@ db_path = args.dbpath
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
+def add_defaults_to_image(image):
+    image.setdefault("processed", False)
+    image.setdefault("approved", False)
+    image.setdefault("crop_left", 0)
+    image.setdefault("crop_top", 0)
+    image.setdefault("crop_size", 0)
+    image.setdefault("crop_extend", "mirror")
+    return image
+
 class ImageDatabase:
     def __init__(self, save_path):
         self.images = {}
@@ -26,17 +35,12 @@ class ImageDatabase:
         for file in os.listdir(path):
             if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
                 if file not in self.images:
-                    self.images[file] = {
-                        "processed": False,
-                        "approved": False,
-                        "crop_left": 0,
-                        "crop_top": 0,
-                        "crop_size": 0,
-                    }
+                    self.images[file] = add_defaults_to_image({})
     
     def load_from_file(self):
         with open(self.save_path, "r") as f:
             self.images = json.load(f)
+        self.images = {k: add_defaults_to_image(v) for k,v in self.images.items()}
     
     def save_to_file(self):
         with open(self.save_path, "w") as f:
@@ -72,6 +76,7 @@ def update_properties():
     crop_left = data["crop_left"]
     crop_top = data["crop_top"]
     crop_size = data["crop_size"]
+    crop_extend = data["crop_extend"]
 
     if filename in db.images:
         db.images[filename]["processed"] = processed
@@ -79,6 +84,7 @@ def update_properties():
         db.images[filename]["crop_left"] = crop_left
         db.images[filename]["crop_top"] = crop_top
         db.images[filename]["crop_size"] = crop_size
+        db.images[filename]["crop_extend"] = crop_extend
         db.save_to_file()
         return filename
 
