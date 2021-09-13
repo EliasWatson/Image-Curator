@@ -9,6 +9,7 @@ import Task
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, id, name, src, title, type_, placeholder, value, checked)
 import Html.Events exposing (onClick, onInput, stopPropagationOn)
+import Dropdown
 
 import Array exposing (Array)
 
@@ -43,6 +44,7 @@ type Msg
     | SetCropSize String
     | CropCenter
     | CropExtend
+    | SetCropExtendMode ( Maybe String )
     | SaveProperties
     | AnimationFrame Float
     | KeyDown String
@@ -154,6 +156,10 @@ viewProperties model =
                     ] [] ]
                 ]
             ]
+        , Dropdown.dropdown
+            extendModeDropdownOptions
+            [ class "crop-extend-mode" ]
+            ( Just ( extendModeEncoder currentImage.cropExtend ) )
         , div [ class "crop-presets" ]
             [ viewButton [] CropCenter ( text "Center" ) 
             , viewButton [] CropExtend ( text "Extend" )
@@ -174,14 +180,97 @@ viewImageViewer model =
             , textures = [ model.currentTextureSource ]
             }
             []
-            (( canvasClearScreen :: canvasRenderImage model ) ++ [ canvasRenderCrop model ])
+            ( ( canvasClearScreen :: canvasRenderExtend model )
+            ++ [ canvasRenderImage model, canvasRenderCrop model ]
+            )
         ]
 
 canvasClearScreen : Canvas.Renderable
 canvasClearScreen =
     shapes [ fill Color.black ] [ rect ( 0, 0 ) canvasSize canvasSize ]
 
-canvasRenderImage : Model -> List Canvas.Renderable
+canvasRenderExtend : Model -> List Canvas.Renderable
+canvasRenderExtend model =
+    case model.currentTexture of
+        Loaded texture_ ->
+            let
+                currentImage = getCurrentImage model
+                scale_ = model.currentTextureProperties.scale
+                leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
+                topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
+                width = model.currentTextureProperties.width
+                height = model.currentTextureProperties.height
+            in 
+            case currentImage.cropExtend of
+                MirrorExtend ->
+                    case model.currentTextureProperties.extendAxis of
+                        Horizontal ->
+                            [ texture
+                                [ transform
+                                    [ translate
+                                        leftShift
+                                        topShift
+                                    , scale ( negate scale_ ) scale_
+                                    ]
+                                , alpha 0.5
+                                ]
+                                ( 0, 0 )
+                                texture_
+                            , texture
+                                [ transform
+                                    [ translate
+                                        ( leftShift + ( (toFloat model.currentTextureProperties.width * 2) * scale_ ) )
+                                        topShift
+                                    , scale ( negate scale_ ) scale_
+                                    ]
+                                , alpha 0.5
+                                ]
+                                ( 0, 0 )
+                                texture_
+                            ]
+                        Vertical ->
+                            [ texture
+                                [ transform
+                                    [ translate
+                                        leftShift
+                                        topShift
+                                    , scale scale_ ( negate scale_ )
+                                    ]
+                                , alpha 0.5
+                                ]
+                                ( 0, 0 )
+                                texture_
+                            , texture
+                                [ transform
+                                    [ translate
+                                        leftShift
+                                        ( topShift + ( (toFloat model.currentTextureProperties.height * 2) * scale_ ) )
+                                    , scale scale_ ( negate scale_ )
+                                    ]
+                                , alpha 0.5
+                                ]
+                                ( 0, 0 )
+                                texture_
+                            ]
+                        None -> []
+                StretchExtend ->
+                    [ texture
+                        [ transform
+                            [ scale
+                                ( canvasSize / ( toFloat width ) )
+                                ( canvasSize / ( toFloat height ) )
+                            ]
+                        , alpha 0.5
+                        ]
+                        ( 0, 0 )
+                        texture_
+                    ]
+                WhiteExtend -> [ shapes [ fill Color.white ] [ rect ( 0, 0 ) canvasSize canvasSize ] ]
+                BlackExtend -> [ shapes [ fill Color.black ] [ rect ( 0, 0 ) canvasSize canvasSize ] ]
+        Loading -> []
+        Errored _ -> []
+
+canvasRenderImage : Model -> Canvas.Renderable
 canvasRenderImage model =
     case model.currentTexture of
         Loaded texture_ ->
@@ -190,7 +279,7 @@ canvasRenderImage model =
                 leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
                 topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
             in
-                ( texture
+                texture
                     [ transform
                         [ translate leftShift topShift
                         , scale scale_ scale_
@@ -198,59 +287,8 @@ canvasRenderImage model =
                     ]
                     ( 0, 0 )
                     texture_
-                ) ::
-                case model.currentTextureProperties.extendAxis of
-                    Horizontal ->
-                        [ texture
-                            [ transform
-                                [ translate
-                                    leftShift
-                                    topShift
-                                , scale ( negate scale_ ) scale_
-                                ]
-                            , alpha 0.5
-                            ]
-                            ( 0, 0 )
-                            texture_
-                        , texture
-                            [ transform
-                                [ translate
-                                    ( leftShift + ( (toFloat model.currentTextureProperties.width * 2) * scale_ ) )
-                                    topShift
-                                , scale ( negate scale_ ) scale_
-                                ]
-                            , alpha 0.5
-                            ]
-                            ( 0, 0 )
-                            texture_
-                        ]
-                    Vertical ->
-                        [ texture
-                            [ transform
-                                [ translate
-                                    leftShift
-                                    topShift
-                                , scale scale_ ( negate scale_ )
-                                ]
-                            , alpha 0.5
-                            ]
-                            ( 0, 0 )
-                            texture_
-                        , texture
-                            [ transform
-                                [ translate
-                                    leftShift
-                                    ( topShift + ( (toFloat model.currentTextureProperties.height * 2) * scale_ ) )
-                                , scale scale_ ( negate scale_ )
-                                ]
-                            , alpha 0.5
-                            ]
-                            ( 0, 0 )
-                            texture_
-                        ]
-                    None -> []
-        Loading -> []
-        Errored _ -> []
+        Loading -> shapes [] []
+        Errored _ -> shapes [] []
 
 canvasRenderCrop : Model -> Canvas.Renderable
 canvasRenderCrop model =
@@ -405,6 +443,12 @@ update msg model =
                 }
             , Cmd.none
             )
+        SetCropExtendMode ( Just str ) ->
+            ( updateCurrentImageProperties model
+                { currentImage | cropExtend = extendModeDecoderString str }
+            , Cmd.none
+            )
+        SetCropExtendMode Nothing -> ( model, Cmd.none )
         SaveProperties -> ( model, updateDatabase currentImage )
         AnimationFrame dt -> ( model, Cmd.none )
         KeyDown "ArrowLeft" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - canvasPercent }, Cmd.none )
@@ -464,14 +508,17 @@ imageDecoder =
 extendModeDecoder : Decoder ExtendMode
 extendModeDecoder =
     Json.Decode.string
-        |> Json.Decode.andThen (\str ->
-            case str of
-                "mirror" -> Json.Decode.succeed MirrorExtend
-                "stretch" -> Json.Decode.succeed StretchExtend
-                "white" -> Json.Decode.succeed WhiteExtend
-                "black" -> Json.Decode.succeed BlackExtend
-                _ -> Json.Decode.fail <| "Unknown extend method: " ++ str
-        )
+        |> Json.Decode.andThen
+            (\str -> Json.Decode.succeed <| extendModeDecoderString str)
+
+extendModeDecoderString : String -> ExtendMode
+extendModeDecoderString str =
+    case str of
+        "mirror" -> MirrorExtend
+        "stretch" -> StretchExtend
+        "white" -> WhiteExtend
+        "black" -> BlackExtend
+        _ -> MirrorExtend
 
 updateCurrentTextureSource : Model -> Model
 updateCurrentTextureSource model =
@@ -528,6 +575,20 @@ sendMsg : msg -> Cmd msg
 sendMsg msg =
     Task.succeed msg
     |> Task.perform identity
+
+extendModeDropdownOptions : Dropdown.Options Msg
+extendModeDropdownOptions =
+    let
+        defaultOptions = Dropdown.defaultOptions SetCropExtendMode
+    in
+    { defaultOptions
+    | items = 
+        [ { value = "mirror", text = "Mirror", enabled = True }
+        , { value = "stretch", text = "Stretch", enabled = True }
+        , { value = "white", text = "White", enabled = True }
+        , { value = "black", text = "Black", enabled = True }
+        ]
+    }
 
 stopKeyPropagation : Attribute Msg
 stopKeyPropagation =

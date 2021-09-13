@@ -6162,32 +6162,36 @@ var $author$project$ImageCurator$Image = F7(
 	});
 var $author$project$ImageCurator$MirrorExtend = {$: 'MirrorExtend'};
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $author$project$ImageCurator$BlackExtend = {$: 'BlackExtend'};
 var $author$project$ImageCurator$StretchExtend = {$: 'StretchExtend'};
 var $author$project$ImageCurator$WhiteExtend = {$: 'WhiteExtend'};
-var $elm$json$Json$Decode$andThen = _Json_andThen;
-var $elm$json$Json$Decode$fail = _Json_fail;
+var $author$project$ImageCurator$extendModeDecoderString = function (str) {
+	switch (str) {
+		case 'mirror':
+			return $author$project$ImageCurator$MirrorExtend;
+		case 'stretch':
+			return $author$project$ImageCurator$StretchExtend;
+		case 'white':
+			return $author$project$ImageCurator$WhiteExtend;
+		case 'black':
+			return $author$project$ImageCurator$BlackExtend;
+		default:
+			return $author$project$ImageCurator$MirrorExtend;
+	}
+};
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$ImageCurator$extendModeDecoder = A2(
 	$elm$json$Json$Decode$andThen,
 	function (str) {
-		switch (str) {
-			case 'mirror':
-				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$MirrorExtend);
-			case 'stretch':
-				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$StretchExtend);
-			case 'white':
-				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$WhiteExtend);
-			case 'black':
-				return $elm$json$Json$Decode$succeed($author$project$ImageCurator$BlackExtend);
-			default:
-				return $elm$json$Json$Decode$fail('Unknown extend method: ' + str);
-		}
+		return $elm$json$Json$Decode$succeed(
+			$author$project$ImageCurator$extendModeDecoderString(str));
 	},
 	$elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = $elm$json$Json$Decode$map2($elm$core$Basics$apR);
 var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $elm$json$Json$Decode$fail = _Json_fail;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$value = _Json_decodeValue;
@@ -7192,6 +7196,23 @@ var $author$project$ImageCurator$update = F2(
 							currentImage,
 							{cropLeft: -model.currentTextureProperties.leftOffset, cropSize: maxDim, cropTop: -model.currentTextureProperties.topOffset})),
 					$elm$core$Platform$Cmd$none);
+			case 'SetCropExtendMode':
+				if (msg.a.$ === 'Just') {
+					var str = msg.a.a;
+					return _Utils_Tuple2(
+						A2(
+							$author$project$ImageCurator$updateCurrentImageProperties,
+							model,
+							_Utils_update(
+								currentImage,
+								{
+									cropExtend: $author$project$ImageCurator$extendModeDecoderString(str)
+								})),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var _v2 = msg.a;
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'SaveProperties':
 				return _Utils_Tuple2(
 					model,
@@ -7656,32 +7677,23 @@ var $joakin$elm_canvas$Canvas$Settings$Advanced$Translate = F2(
 		return {$: 'Translate', a: a, b: b};
 	});
 var $joakin$elm_canvas$Canvas$Settings$Advanced$translate = $joakin$elm_canvas$Canvas$Settings$Advanced$Translate;
-var $author$project$ImageCurator$canvasRenderImage = function (model) {
+var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
+var $author$project$ImageCurator$canvasRenderExtend = function (model) {
 	var _v0 = model.currentTexture;
 	switch (_v0.$) {
 		case 'Loaded':
 			var texture_ = _v0.a;
+			var width = model.currentTextureProperties.width;
 			var scale_ = model.currentTextureProperties.scale;
 			var topShift = model.currentTextureProperties.topOffset * scale_;
 			var leftShift = model.currentTextureProperties.leftOffset * scale_;
-			return A2(
-				$elm$core$List$cons,
-				A3(
-					$joakin$elm_canvas$Canvas$texture,
-					_List_fromArray(
-						[
-							$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-							_List_fromArray(
-								[
-									A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
-									A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
-								]))
-						]),
-					_Utils_Tuple2(0, 0),
-					texture_),
-				function () {
-					var _v1 = model.currentTextureProperties.extendAxis;
-					switch (_v1.$) {
+			var height = model.currentTextureProperties.height;
+			var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+			var _v1 = currentImage.cropExtend;
+			switch (_v1.$) {
+				case 'MirrorExtend':
+					var _v2 = model.currentTextureProperties.extendAxis;
+					switch (_v2.$) {
 						case 'Horizontal':
 							return _List_fromArray(
 								[
@@ -7749,11 +7761,91 @@ var $author$project$ImageCurator$canvasRenderImage = function (model) {
 						default:
 							return _List_Nil;
 					}
-				}());
+				case 'StretchExtend':
+					return _List_fromArray(
+						[
+							A3(
+							$joakin$elm_canvas$Canvas$texture,
+							_List_fromArray(
+								[
+									$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+									_List_fromArray(
+										[
+											A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, $author$project$ImageCurator$canvasSize / width, $author$project$ImageCurator$canvasSize / height)
+										])),
+									$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
+								]),
+							_Utils_Tuple2(0, 0),
+							texture_)
+						]);
+				case 'WhiteExtend':
+					return _List_fromArray(
+						[
+							A2(
+							$joakin$elm_canvas$Canvas$shapes,
+							_List_fromArray(
+								[
+									$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$white)
+								]),
+							_List_fromArray(
+								[
+									A3(
+									$joakin$elm_canvas$Canvas$rect,
+									_Utils_Tuple2(0, 0),
+									$author$project$ImageCurator$canvasSize,
+									$author$project$ImageCurator$canvasSize)
+								]))
+						]);
+				default:
+					return _List_fromArray(
+						[
+							A2(
+							$joakin$elm_canvas$Canvas$shapes,
+							_List_fromArray(
+								[
+									$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$black)
+								]),
+							_List_fromArray(
+								[
+									A3(
+									$joakin$elm_canvas$Canvas$rect,
+									_Utils_Tuple2(0, 0),
+									$author$project$ImageCurator$canvasSize,
+									$author$project$ImageCurator$canvasSize)
+								]))
+						]);
+			}
 		case 'Loading':
 			return _List_Nil;
 		default:
 			return _List_Nil;
+	}
+};
+var $author$project$ImageCurator$canvasRenderImage = function (model) {
+	var _v0 = model.currentTexture;
+	switch (_v0.$) {
+		case 'Loaded':
+			var texture_ = _v0.a;
+			var scale_ = model.currentTextureProperties.scale;
+			var topShift = model.currentTextureProperties.topOffset * scale_;
+			var leftShift = model.currentTextureProperties.leftOffset * scale_;
+			return A3(
+				$joakin$elm_canvas$Canvas$texture,
+				_List_fromArray(
+					[
+						$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+						_List_fromArray(
+							[
+								A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+								A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
+							]))
+					]),
+				_Utils_Tuple2(0, 0),
+				texture_);
+		case 'Loading':
+			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
+		default:
+			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
 	}
 };
 var $elm$html$Html$canvas = _VirtualDom_node('canvas');
@@ -8452,9 +8544,10 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 					A2(
 						$elm$core$List$cons,
 						$author$project$ImageCurator$canvasClearScreen,
-						$author$project$ImageCurator$canvasRenderImage(model)),
+						$author$project$ImageCurator$canvasRenderExtend(model)),
 					_List_fromArray(
 						[
+							$author$project$ImageCurator$canvasRenderImage(model),
 							$author$project$ImageCurator$canvasRenderCrop(model)
 						])))
 			]));
@@ -8471,6 +8564,131 @@ var $author$project$ImageCurator$SetCropTop = function (a) {
 };
 var $author$project$ImageCurator$ToggleApproved = {$: 'ToggleApproved'};
 var $author$project$ImageCurator$ToggleProcessed = {$: 'ToggleProcessed'};
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $abadi199$elm_input_extra$Dropdown$onChange = F2(
+	function (emptyItem, tagger) {
+		var textToMaybe = function (string) {
+			return A2(
+				$elm$core$Maybe$withDefault,
+				false,
+				A2(
+					$elm$core$Maybe$map,
+					A2(
+						$elm$core$Basics$composeR,
+						function ($) {
+							return $.value;
+						},
+						$elm$core$Basics$eq(string)),
+					emptyItem)) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(string);
+		};
+		return A2(
+			$elm$html$Html$Events$on,
+			'change',
+			A2(
+				$elm$json$Json$Decode$map,
+				A2($elm$core$Basics$composeR, textToMaybe, tagger),
+				$elm$html$Html$Events$targetValue));
+	});
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $abadi199$elm_input_extra$Dropdown$dropdown = F3(
+	function (options, attributes, currentValue) {
+		var itemsWithEmptyItems = function () {
+			var _v1 = options.emptyItem;
+			if (_v1.$ === 'Just') {
+				var emptyItem = _v1.a;
+				return A2($elm$core$List$cons, emptyItem, options.items);
+			} else {
+				return options.items;
+			}
+		}();
+		var isSelected = function (value) {
+			return A2(
+				$elm$core$Maybe$withDefault,
+				false,
+				A2(
+					$elm$core$Maybe$map,
+					$elm$core$Basics$eq(value),
+					currentValue));
+		};
+		var toOption = function (_v0) {
+			var value = _v0.value;
+			var text = _v0.text;
+			var enabled = _v0.enabled;
+			return A2(
+				$elm$html$Html$option,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$value(value),
+						$elm$html$Html$Attributes$selected(
+						isSelected(value)),
+						$elm$html$Html$Attributes$disabled(!enabled)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(text)
+					]));
+		};
+		return A2(
+			$elm$html$Html$select,
+			_Utils_ap(
+				attributes,
+				_List_fromArray(
+					[
+						A2($abadi199$elm_input_extra$Dropdown$onChange, options.emptyItem, options.onChange)
+					])),
+			A2($elm$core$List$map, toOption, itemsWithEmptyItems));
+	});
+var $author$project$ImageCurator$SetCropExtendMode = function (a) {
+	return {$: 'SetCropExtendMode', a: a};
+};
+var $abadi199$elm_input_extra$Dropdown$defaultOptions = function (onChangeHandler) {
+	return {emptyItem: $elm$core$Maybe$Nothing, items: _List_Nil, onChange: onChangeHandler};
+};
+var $author$project$ImageCurator$extendModeDropdownOptions = function () {
+	var defaultOptions = $abadi199$elm_input_extra$Dropdown$defaultOptions($author$project$ImageCurator$SetCropExtendMode);
+	return _Utils_update(
+		defaultOptions,
+		{
+			items: _List_fromArray(
+				[
+					{enabled: true, text: 'Mirror', value: 'mirror'},
+					{enabled: true, text: 'Stretch', value: 'stretch'},
+					{enabled: true, text: 'White', value: 'white'},
+					{enabled: true, text: 'Black', value: 'black'}
+				])
+		});
+}();
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -8485,15 +8703,6 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
-	});
-var $elm$html$Html$Events$targetValue = A2(
-	$elm$json$Json$Decode$at,
-	_List_fromArray(
-		['target', 'value']),
-	$elm$json$Json$Decode$string);
 var $elm$html$Html$Events$onInput = function (tagger) {
 	return A2(
 		$elm$html$Html$Events$stopPropagationOn,
@@ -8511,11 +8720,8 @@ var $author$project$ImageCurator$stopKeyPropagation = A2(
 		_Utils_Tuple2($author$project$ImageCurator$NoOp, true)));
 var $elm$html$Html$table = _VirtualDom_node('table');
 var $elm$html$Html$td = _VirtualDom_node('td');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -8567,13 +8773,6 @@ var $author$project$ImageCurator$viewButton = F3(
 				]),
 			_List_fromArray(
 				[content]));
-	});
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$label = _VirtualDom_node('label');
@@ -8778,6 +8977,15 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 									]))
 							]))
 					])),
+				A3(
+				$abadi199$elm_input_extra$Dropdown$dropdown,
+				$author$project$ImageCurator$extendModeDropdownOptions,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('crop-extend-mode')
+					]),
+				$elm$core$Maybe$Just(
+					$author$project$ImageCurator$extendModeEncoder(currentImage.cropExtend))),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
