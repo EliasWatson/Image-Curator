@@ -459,6 +459,8 @@ update msg model =
         KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + canvasPercent }, Cmd.none )
         KeyDown "a" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex - 1), updateDatabase currentImage )
         KeyDown "d" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex + 1), updateDatabase currentImage )
+        KeyDown "w" -> ( updateCurrentImageProperties model <| { currentImage | cropExtend = getPrevExtendMode currentImage.cropExtend }, Cmd.none )
+        KeyDown "s" -> ( updateCurrentImageProperties model <| { currentImage | cropExtend = getNextExtendMode currentImage.cropExtend }, Cmd.none )
         KeyDown " " -> ( updateCurrentImageProperties model { currentImage | processed = not currentImage.processed }, Cmd.none )
         KeyDown "q" -> ( updateCurrentImageProperties model { currentImage | approved = not currentImage.approved }, Cmd.none )
         KeyDown "e" -> ( model, sendMsg CropExtend )
@@ -570,6 +572,22 @@ getCurrentImage model =
                 <| Array.get model.currentImageIndex images
         Loading -> emptyImage
         Errored _ -> emptyImage
+
+getNextExtendMode : ExtendMode -> ExtendMode
+getNextExtendMode mode =
+    case mode of
+        MirrorExtend -> StretchExtend
+        StretchExtend -> WhiteExtend
+        WhiteExtend -> BlackExtend
+        BlackExtend -> MirrorExtend
+
+getPrevExtendMode : ExtendMode -> ExtendMode
+getPrevExtendMode mode =
+    case mode of
+        MirrorExtend -> BlackExtend
+        StretchExtend -> MirrorExtend
+        WhiteExtend -> StretchExtend
+        BlackExtend -> WhiteExtend
 
 sendMsg : msg -> Cmd msg
 sendMsg msg =

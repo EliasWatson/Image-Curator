@@ -6796,6 +6796,30 @@ var $author$project$ImageCurator$getCurrentImage = function (model) {
 			return $author$project$ImageCurator$emptyImage;
 	}
 };
+var $author$project$ImageCurator$getNextExtendMode = function (mode) {
+	switch (mode.$) {
+		case 'MirrorExtend':
+			return $author$project$ImageCurator$StretchExtend;
+		case 'StretchExtend':
+			return $author$project$ImageCurator$WhiteExtend;
+		case 'WhiteExtend':
+			return $author$project$ImageCurator$BlackExtend;
+		default:
+			return $author$project$ImageCurator$MirrorExtend;
+	}
+};
+var $author$project$ImageCurator$getPrevExtendMode = function (mode) {
+	switch (mode.$) {
+		case 'MirrorExtend':
+			return $author$project$ImageCurator$BlackExtend;
+		case 'StretchExtend':
+			return $author$project$ImageCurator$MirrorExtend;
+		case 'WhiteExtend':
+			return $author$project$ImageCurator$StretchExtend;
+		default:
+			return $author$project$ImageCurator$WhiteExtend;
+	}
+};
 var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
@@ -7286,6 +7310,28 @@ var $author$project$ImageCurator$update = F2(
 							$author$project$ImageCurator$updateCurrentImageProcessed(
 								A2($author$project$ImageCurator$updateCurrentImage, model, model.currentImageIndex + 1)),
 							$author$project$ImageCurator$updateDatabase(currentImage));
+					case 'w':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{
+										cropExtend: $author$project$ImageCurator$getPrevExtendMode(currentImage.cropExtend)
+									})),
+							$elm$core$Platform$Cmd$none);
+					case 's':
+						return _Utils_Tuple2(
+							A2(
+								$author$project$ImageCurator$updateCurrentImageProperties,
+								model,
+								_Utils_update(
+									currentImage,
+									{
+										cropExtend: $author$project$ImageCurator$getNextExtendMode(currentImage.cropExtend)
+									})),
+							$elm$core$Platform$Cmd$none);
 					case ' ':
 						return _Utils_Tuple2(
 							A2(
