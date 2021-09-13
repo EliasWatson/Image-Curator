@@ -6220,7 +6220,7 @@ var $joakin$elm_canvas$Canvas$Texture$loadFromImageUrl = F2(
 var $author$project$ImageCurator$initialModel = {
 	currentImageIndex: 0,
 	currentTexture: $author$project$ImageCurator$Loading,
-	currentTextureProperties: {extendAxis: $author$project$ImageCurator$None, height: 0, leftOffset: 0, scale: 1.0, topOffset: 0, width: 0},
+	currentTextureProperties: {canvasPercent: 1, extendAxis: $author$project$ImageCurator$None, height: 0, leftOffset: 0, scale: 1.0, topOffset: 0, width: 0},
 	currentTextureSource: A2($joakin$elm_canvas$Canvas$Texture$loadFromImageUrl, 'img/loading.png', $author$project$ImageCurator$GotTexture),
 	status: $author$project$ImageCurator$Loading
 };
@@ -6925,6 +6925,7 @@ var $author$project$ImageCurator$updateDatabase = function (image) {
 var $author$project$ImageCurator$update = F2(
 	function (msg, model) {
 		var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+		var canvasPercent = model.currentTextureProperties.canvasPercent;
 		switch (msg.$) {
 			case 'NoOp':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6976,6 +6977,10 @@ var $author$project$ImageCurator$update = F2(
 							{
 								currentTexture: $author$project$ImageCurator$Loaded(texture),
 								currentTextureProperties: {
+									canvasPercent: A2(
+										$elm$core$Basics$max,
+										1,
+										$elm$core$Basics$round(($author$project$ImageCurator$canvasSize * 0.01) / scale)),
 									extendAxis: (_Utils_cmp(dimensions.width, dimensions.height) < 0) ? $author$project$ImageCurator$Horizontal : ((_Utils_cmp(dimensions.height, dimensions.width) < 0) ? $author$project$ImageCurator$Vertical : $author$project$ImageCurator$None),
 									height: $elm$core$Basics$round(dimensions.height),
 									leftOffset: $elm$core$Basics$floor((maxDim - dimensions.width) / 2),
@@ -7107,7 +7112,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropLeft: currentImage.cropLeft - 1})),
+									{cropLeft: currentImage.cropLeft - canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case 'ArrowRight':
 						return _Utils_Tuple2(
@@ -7116,7 +7121,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropLeft: currentImage.cropLeft + 1})),
+									{cropLeft: currentImage.cropLeft + canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case 'ArrowUp':
 						return _Utils_Tuple2(
@@ -7125,7 +7130,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropTop: currentImage.cropTop - 1})),
+									{cropTop: currentImage.cropTop - canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case 'ArrowDown':
 						return _Utils_Tuple2(
@@ -7134,7 +7139,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropTop: currentImage.cropTop + 1})),
+									{cropTop: currentImage.cropTop + canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case '-':
 						return _Utils_Tuple2(
@@ -7143,7 +7148,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropSize: currentImage.cropSize - 1})),
+									{cropSize: currentImage.cropSize - canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case '+':
 						return _Utils_Tuple2(
@@ -7152,7 +7157,7 @@ var $author$project$ImageCurator$update = F2(
 								model,
 								_Utils_update(
 									currentImage,
-									{cropSize: currentImage.cropSize + 1})),
+									{cropSize: currentImage.cropSize + canvasPercent})),
 							$elm$core$Platform$Cmd$none);
 					case 'a':
 						return _Utils_Tuple2(

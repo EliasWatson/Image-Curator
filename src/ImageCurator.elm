@@ -73,6 +73,7 @@ type alias TextureProperties =
     , leftOffset : Int
     , topOffset : Int
     , extendAxis : ImageExtendAxis
+    , canvasPercent : Int
     }
 
 type alias Model =
@@ -280,6 +281,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         currentImage = getCurrentImage model
+        canvasPercent = model.currentTextureProperties.canvasPercent
     in
     case msg of
         NoOp -> ( model, Cmd.none )
@@ -323,6 +325,7 @@ update msg model =
                         if dimensions.width < dimensions.height then Horizontal
                         else if dimensions.height < dimensions.width then Vertical
                         else None
+                    , canvasPercent = max 1 <| round ((canvasSize * 0.01) / scale)
                     }
                 }
             , Cmd.none
@@ -396,12 +399,12 @@ update msg model =
             )
         SaveProperties -> ( model, updateDatabase currentImage )
         AnimationFrame dt -> ( model, Cmd.none )
-        KeyDown "ArrowLeft" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - 1 }, Cmd.none )
-        KeyDown "ArrowRight" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + 1 }, Cmd.none )
-        KeyDown "ArrowUp" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - 1 }, Cmd.none )
-        KeyDown "ArrowDown" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + 1 }, Cmd.none )
-        KeyDown "-" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - 1 }, Cmd.none )
-        KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + 1 }, Cmd.none )
+        KeyDown "ArrowLeft" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft - canvasPercent }, Cmd.none )
+        KeyDown "ArrowRight" -> ( updateCurrentImageProperties model { currentImage | cropLeft = currentImage.cropLeft + canvasPercent }, Cmd.none )
+        KeyDown "ArrowUp" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop - canvasPercent }, Cmd.none )
+        KeyDown "ArrowDown" -> ( updateCurrentImageProperties model { currentImage | cropTop = currentImage.cropTop + canvasPercent }, Cmd.none )
+        KeyDown "-" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize - canvasPercent }, Cmd.none )
+        KeyDown "+" -> ( updateCurrentImageProperties model { currentImage | cropSize = currentImage.cropSize + canvasPercent }, Cmd.none )
         KeyDown "a" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex - 1), updateDatabase currentImage )
         KeyDown "d" -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex + 1), updateDatabase currentImage )
         KeyDown " " -> ( updateCurrentImageProperties model { currentImage | processed = not currentImage.processed }, Cmd.none )
@@ -523,6 +526,7 @@ initialModel =
         , leftOffset = 0
         , topOffset = 0
         , extendAxis = None
+        , canvasPercent = 1
         }
     }
 
