@@ -15,17 +15,23 @@ body {
 	cursor: pointer;
 }
 
+.panel {
+	border: 1px solid gray;
+	border-radius: 3px;
+	padding: 5px;
+}
+
 .workspace {
 	display: flex;
 	justify-content: center;
 	margin: 5px;
 }
 
-.workspace .properties {
-	border: 1px solid gray;
-	border-radius: 3px;
-	padding: 5px;
+.workspace .left-panel {
 	margin-right: 5px;
+}
+
+.workspace .properties {
 	width: fit-content;
 	display: flex;
 	flex-direction: column;
@@ -68,10 +74,11 @@ body {
 	text-align: center;
 }
 
+.workspace .crop-preview {
+	margin-top: 5px;
+}
+
 .workspace .image-viewer {
-	border: 1px solid gray;
-	border-radius: 3px;
-	padding: 5px;
 	width: fit-content;
 	display: flex;
 	justify-content: center;

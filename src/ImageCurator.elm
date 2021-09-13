@@ -29,6 +29,9 @@ apiUrl = "http://192.168.0.152:8080"
 canvasSize : number
 canvasSize = 1024
 
+previewSize : number
+previewSize = 256
+
 type Msg
     = NoOp
     | GotImages (Result Http.Error (Array Image))
@@ -114,7 +117,10 @@ viewNavigationBar model =
 viewWorkspace : Model -> Html Msg
 viewWorkspace model =
     div [ class "workspace" ]
-        [ viewProperties model
+        [ div [ class "left-panel" ]
+            [ viewProperties model
+            , viewCropPreview model
+            ]
         , viewImageViewer model
         ]
 
@@ -123,7 +129,7 @@ viewProperties model =
     let
         currentImage = getCurrentImage model
     in
-    div [ class "properties" ]
+    div [ class "panel properties" ]
         [ div [ class "filename" ] [ text (getCurrentImage model).filename ]
         , viewCheckbox ToggleProcessed (getCurrentImage model).processed "Processed"
         , viewCheckbox ToggleApproved (getCurrentImage model).approved "Approved"
@@ -173,57 +179,89 @@ viewImageViewer model =
     let
         currentImage = getCurrentImage model
     in
-    div [ class "image-viewer" ]
+    div [ class "panel image-viewer" ]
         [ Canvas.toHtmlWith
             { width = canvasSize
             , height = canvasSize
             , textures = [ model.currentTextureSource ]
             }
             []
-            ( ( canvasClearScreen :: canvasRenderExtend model )
-            ++ [ canvasRenderImage model, canvasRenderCrop model ]
-            )
+            <| canvasRenderFullSize model
         ]
+
+viewCropPreview : Model -> Html Msg
+viewCropPreview model =
+    let
+        currentImage = getCurrentImage model
+    in
+    div [ class "panel crop-preview" ]
+        [ Canvas.toHtmlWith
+            { width = previewSize
+            , height = previewSize
+            , textures = [ model.currentTextureSource ]
+            }
+            []
+            <| canvasRenderPreview model
+        ]
+
+canvasRenderFullSize : Model -> List Canvas.Renderable
+canvasRenderFullSize model =
+    let
+        leftShift = model.currentTextureProperties.leftOffset
+        topShift = model.currentTextureProperties.topOffset
+        size = max model.currentTextureProperties.width model.currentTextureProperties.height
+    in 
+    ( ( canvasClearScreen :: canvasRenderExtend 0.5 canvasSize leftShift topShift size model )
+    ++ [ canvasRenderImage canvasSize leftShift topShift size model, canvasRenderCrop model ]
+    )
+
+canvasRenderPreview : Model -> List Canvas.Renderable
+canvasRenderPreview model =
+    let
+        currentImage = getCurrentImage model
+        leftShift = negate currentImage.cropLeft
+        topShift = negate currentImage.cropTop
+        size = currentImage.cropSize
+    in 
+    ( ( canvasClearScreen :: canvasRenderExtend 1.0 previewSize leftShift topShift size model )
+    ++ [ canvasRenderImage previewSize leftShift topShift size model ]
+    )
 
 canvasClearScreen : Canvas.Renderable
 canvasClearScreen =
     shapes [ fill Color.black ] [ rect ( 0, 0 ) canvasSize canvasSize ]
 
-canvasRenderExtend : Model -> List Canvas.Renderable
-canvasRenderExtend model =
+canvasRenderExtend : Float -> Int -> Int -> Int -> Int -> Model -> List Canvas.Renderable
+canvasRenderExtend alpha_ canvasSize_ left top size model =
+    let
+        currentImage = getCurrentImage model
+        scale_ = toFloat canvasSize_ / toFloat size
+        leftShift = (toFloat left) * scale_
+        topShift = (toFloat top) * scale_
+        width = model.currentTextureProperties.width
+        height = model.currentTextureProperties.height
+    in 
     case model.currentTexture of
         Loaded texture_ ->
-            let
-                currentImage = getCurrentImage model
-                scale_ = model.currentTextureProperties.scale
-                leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
-                topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
-                width = model.currentTextureProperties.width
-                height = model.currentTextureProperties.height
-            in 
             case currentImage.cropExtend of
                 MirrorExtend ->
                     case model.currentTextureProperties.extendAxis of
                         Horizontal ->
                             [ texture
                                 [ transform
-                                    [ translate
-                                        leftShift
-                                        topShift
+                                    [ translate leftShift topShift
                                     , scale ( negate scale_ ) scale_
                                     ]
-                                , alpha 0.5
+                                , alpha alpha_
                                 ]
                                 ( 0, 0 )
                                 texture_
                             , texture
                                 [ transform
-                                    [ translate
-                                        ( leftShift + ( (toFloat model.currentTextureProperties.width * 2) * scale_ ) )
-                                        topShift
+                                    [ translate ( leftShift + ( (toFloat width * 2) * scale_ ) ) topShift
                                     , scale ( negate scale_ ) scale_
                                     ]
-                                , alpha 0.5
+                                , alpha alpha_
                                 ]
                                 ( 0, 0 )
                                 texture_
@@ -231,23 +269,19 @@ canvasRenderExtend model =
                         Vertical ->
                             [ texture
                                 [ transform
-                                    [ translate
-                                        leftShift
-                                        topShift
+                                    [ translate leftShift topShift
                                     , scale scale_ ( negate scale_ )
                                     ]
-                                , alpha 0.5
+                                , alpha alpha_
                                 ]
                                 ( 0, 0 )
                                 texture_
                             , texture
                                 [ transform
-                                    [ translate
-                                        leftShift
-                                        ( topShift + ( (toFloat model.currentTextureProperties.height * 2) * scale_ ) )
+                                    [ translate leftShift ( topShift + ( (toFloat height * 2) * scale_ ) )
                                     , scale scale_ ( negate scale_ )
                                     ]
-                                , alpha 0.5
+                                , alpha alpha_
                                 ]
                                 ( 0, 0 )
                                 texture_
@@ -257,36 +291,38 @@ canvasRenderExtend model =
                     [ texture
                         [ transform
                             [ scale
-                                ( canvasSize / ( toFloat width ) )
-                                ( canvasSize / ( toFloat height ) )
+                                ( canvasSize / toFloat width )
+                                ( canvasSize / toFloat height )
                             ]
-                        , alpha 0.5
+                        , alpha alpha_
                         ]
                         ( 0, 0 )
                         texture_
                     ]
-                WhiteExtend -> [ shapes [ fill Color.white ] [ rect ( 0, 0 ) canvasSize canvasSize ] ]
-                BlackExtend -> [ shapes [ fill Color.black ] [ rect ( 0, 0 ) canvasSize canvasSize ] ]
+                WhiteExtend -> [ shapes [ fill Color.white ] [ rect ( 0, 0 ) ( toFloat canvasSize_ ) ( toFloat canvasSize_ ) ] ]
+                BlackExtend -> [ shapes [ fill Color.black ] [ rect ( 0, 0 ) ( toFloat canvasSize_ ) ( toFloat canvasSize_ ) ] ]
         Loading -> []
         Errored _ -> []
 
-canvasRenderImage : Model -> Canvas.Renderable
-canvasRenderImage model =
+canvasRenderImage : Int -> Int -> Int -> Int -> Model -> Canvas.Renderable
+canvasRenderImage canvasSize_ left top size model =
+    let
+        scale_ = toFloat canvasSize_ / toFloat size
+        leftShift = (toFloat left) * scale_
+        topShift = (toFloat top) * scale_
+        width = model.currentTextureProperties.width
+        height = model.currentTextureProperties.height
+    in 
     case model.currentTexture of
         Loaded texture_ ->
-            let
-                scale_ = model.currentTextureProperties.scale
-                leftShift = (toFloat model.currentTextureProperties.leftOffset) * scale_
-                topShift = (toFloat model.currentTextureProperties.topOffset) * scale_
-            in
-                texture
-                    [ transform
-                        [ translate leftShift topShift
-                        , scale scale_ scale_
-                        ]
+            texture
+                [ transform
+                    [ translate leftShift topShift
+                    , scale scale_ scale_
                     ]
-                    ( 0, 0 )
-                    texture_
+                ]
+                ( 0, 0 )
+                texture_
         Loading -> shapes [] []
         Errored _ -> shapes [] []
 

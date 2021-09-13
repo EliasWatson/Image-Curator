@@ -7541,31 +7541,6 @@ var $author$project$ImageCurator$canvasClearScreen = A2(
 			$author$project$ImageCurator$canvasSize,
 			$author$project$ImageCurator$canvasSize)
 		]));
-var $avh4$elm_color$Color$red = A4($avh4$elm_color$Color$RgbaSpace, 204 / 255, 0 / 255, 0 / 255, 1.0);
-var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
-	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingDrawOp(
-		$joakin$elm_canvas$Canvas$Internal$Canvas$Stroke(color));
-};
-var $author$project$ImageCurator$canvasRenderCrop = function (model) {
-	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
-	var cropTop = (model.currentTextureProperties.topOffset + currentImage.cropTop) * model.currentTextureProperties.scale;
-	var cropSize = currentImage.cropSize * model.currentTextureProperties.scale;
-	var cropLeft = (model.currentTextureProperties.leftOffset + currentImage.cropLeft) * model.currentTextureProperties.scale;
-	return A2(
-		$joakin$elm_canvas$Canvas$shapes,
-		_List_fromArray(
-			[
-				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red)
-			]),
-		_List_fromArray(
-			[
-				A3(
-				$joakin$elm_canvas$Canvas$rect,
-				_Utils_Tuple2(cropLeft, cropTop),
-				cropSize,
-				cropSize)
-			]));
-};
 var $joakin$elm_canvas$Canvas$Internal$Canvas$SettingCommand = function (a) {
 	return {$: 'SettingCommand', a: a};
 };
@@ -7724,175 +7699,195 @@ var $joakin$elm_canvas$Canvas$Settings$Advanced$Translate = F2(
 	});
 var $joakin$elm_canvas$Canvas$Settings$Advanced$translate = $joakin$elm_canvas$Canvas$Settings$Advanced$Translate;
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
-var $author$project$ImageCurator$canvasRenderExtend = function (model) {
-	var _v0 = model.currentTexture;
-	switch (_v0.$) {
-		case 'Loaded':
-			var texture_ = _v0.a;
-			var width = model.currentTextureProperties.width;
-			var scale_ = model.currentTextureProperties.scale;
-			var topShift = model.currentTextureProperties.topOffset * scale_;
-			var leftShift = model.currentTextureProperties.leftOffset * scale_;
-			var height = model.currentTextureProperties.height;
-			var currentImage = $author$project$ImageCurator$getCurrentImage(model);
-			var _v1 = currentImage.cropExtend;
-			switch (_v1.$) {
-				case 'MirrorExtend':
-					var _v2 = model.currentTextureProperties.extendAxis;
-					switch (_v2.$) {
-						case 'Horizontal':
-							return _List_fromArray(
-								[
-									A3(
-									$joakin$elm_canvas$Canvas$texture,
-									_List_fromArray(
-										[
-											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-											_List_fromArray(
-												[
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
-												])),
-											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
-										]),
-									_Utils_Tuple2(0, 0),
-									texture_),
-									A3(
-									$joakin$elm_canvas$Canvas$texture,
-									_List_fromArray(
-										[
-											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-											_List_fromArray(
-												[
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift + ((model.currentTextureProperties.width * 2) * scale_), topShift),
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
-												])),
-											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
-										]),
-									_Utils_Tuple2(0, 0),
-									texture_)
-								]);
-						case 'Vertical':
-							return _List_fromArray(
-								[
-									A3(
-									$joakin$elm_canvas$Canvas$texture,
-									_List_fromArray(
-										[
-											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-											_List_fromArray(
-												[
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
-												])),
-											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
-										]),
-									_Utils_Tuple2(0, 0),
-									texture_),
-									A3(
-									$joakin$elm_canvas$Canvas$texture,
-									_List_fromArray(
-										[
-											$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-											_List_fromArray(
-												[
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift + ((model.currentTextureProperties.height * 2) * scale_)),
-													A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
-												])),
-											$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
-										]),
-									_Utils_Tuple2(0, 0),
-									texture_)
-								]);
-						default:
-							return _List_Nil;
-					}
-				case 'StretchExtend':
-					return _List_fromArray(
-						[
-							A3(
-							$joakin$elm_canvas$Canvas$texture,
-							_List_fromArray(
-								[
-									$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-									_List_fromArray(
-										[
-											A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, $author$project$ImageCurator$canvasSize / width, $author$project$ImageCurator$canvasSize / height)
-										])),
-									$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(0.5)
-								]),
-							_Utils_Tuple2(0, 0),
-							texture_)
-						]);
-				case 'WhiteExtend':
-					return _List_fromArray(
-						[
-							A2(
-							$joakin$elm_canvas$Canvas$shapes,
-							_List_fromArray(
-								[
-									$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$white)
-								]),
-							_List_fromArray(
-								[
-									A3(
-									$joakin$elm_canvas$Canvas$rect,
-									_Utils_Tuple2(0, 0),
-									$author$project$ImageCurator$canvasSize,
-									$author$project$ImageCurator$canvasSize)
-								]))
-						]);
-				default:
-					return _List_fromArray(
-						[
-							A2(
-							$joakin$elm_canvas$Canvas$shapes,
-							_List_fromArray(
-								[
-									$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$black)
-								]),
-							_List_fromArray(
-								[
-									A3(
-									$joakin$elm_canvas$Canvas$rect,
-									_Utils_Tuple2(0, 0),
-									$author$project$ImageCurator$canvasSize,
-									$author$project$ImageCurator$canvasSize)
-								]))
-						]);
-			}
-		case 'Loading':
-			return _List_Nil;
-		default:
-			return _List_Nil;
-	}
-};
-var $author$project$ImageCurator$canvasRenderImage = function (model) {
-	var _v0 = model.currentTexture;
-	switch (_v0.$) {
-		case 'Loaded':
-			var texture_ = _v0.a;
-			var scale_ = model.currentTextureProperties.scale;
-			var topShift = model.currentTextureProperties.topOffset * scale_;
-			var leftShift = model.currentTextureProperties.leftOffset * scale_;
-			return A3(
-				$joakin$elm_canvas$Canvas$texture,
-				_List_fromArray(
-					[
-						$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
-						_List_fromArray(
+var $author$project$ImageCurator$canvasRenderExtend = F6(
+	function (alpha_, canvasSize_, left, top, size, model) {
+		var width = model.currentTextureProperties.width;
+		var scale_ = canvasSize_ / size;
+		var topShift = top * scale_;
+		var leftShift = left * scale_;
+		var height = model.currentTextureProperties.height;
+		var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+		var _v0 = model.currentTexture;
+		switch (_v0.$) {
+			case 'Loaded':
+				var texture_ = _v0.a;
+				var _v1 = currentImage.cropExtend;
+				switch (_v1.$) {
+					case 'MirrorExtend':
+						var _v2 = model.currentTextureProperties.extendAxis;
+						switch (_v2.$) {
+							case 'Horizontal':
+								return _List_fromArray(
+									[
+										A3(
+										$joakin$elm_canvas$Canvas$texture,
+										_List_fromArray(
+											[
+												$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+												_List_fromArray(
+													[
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
+													])),
+												$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(alpha_)
+											]),
+										_Utils_Tuple2(0, 0),
+										texture_),
+										A3(
+										$joakin$elm_canvas$Canvas$texture,
+										_List_fromArray(
+											[
+												$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+												_List_fromArray(
+													[
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift + ((width * 2) * scale_), topShift),
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, -scale_, scale_)
+													])),
+												$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(alpha_)
+											]),
+										_Utils_Tuple2(0, 0),
+										texture_)
+									]);
+							case 'Vertical':
+								return _List_fromArray(
+									[
+										A3(
+										$joakin$elm_canvas$Canvas$texture,
+										_List_fromArray(
+											[
+												$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+												_List_fromArray(
+													[
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
+													])),
+												$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(alpha_)
+											]),
+										_Utils_Tuple2(0, 0),
+										texture_),
+										A3(
+										$joakin$elm_canvas$Canvas$texture,
+										_List_fromArray(
+											[
+												$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+												_List_fromArray(
+													[
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift + ((height * 2) * scale_)),
+														A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, -scale_)
+													])),
+												$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(alpha_)
+											]),
+										_Utils_Tuple2(0, 0),
+										texture_)
+									]);
+							default:
+								return _List_Nil;
+						}
+					case 'StretchExtend':
+						return _List_fromArray(
 							[
-								A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
-								A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
-							]))
-					]),
-				_Utils_Tuple2(0, 0),
-				texture_);
-		case 'Loading':
-			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
-		default:
-			return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
-	}
+								A3(
+								$joakin$elm_canvas$Canvas$texture,
+								_List_fromArray(
+									[
+										$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+										_List_fromArray(
+											[
+												A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, $author$project$ImageCurator$canvasSize / width, $author$project$ImageCurator$canvasSize / height)
+											])),
+										$joakin$elm_canvas$Canvas$Settings$Advanced$alpha(alpha_)
+									]),
+								_Utils_Tuple2(0, 0),
+								texture_)
+							]);
+					case 'WhiteExtend':
+						return _List_fromArray(
+							[
+								A2(
+								$joakin$elm_canvas$Canvas$shapes,
+								_List_fromArray(
+									[
+										$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$white)
+									]),
+								_List_fromArray(
+									[
+										A3(
+										$joakin$elm_canvas$Canvas$rect,
+										_Utils_Tuple2(0, 0),
+										canvasSize_,
+										canvasSize_)
+									]))
+							]);
+					default:
+						return _List_fromArray(
+							[
+								A2(
+								$joakin$elm_canvas$Canvas$shapes,
+								_List_fromArray(
+									[
+										$joakin$elm_canvas$Canvas$Settings$fill($avh4$elm_color$Color$black)
+									]),
+								_List_fromArray(
+									[
+										A3(
+										$joakin$elm_canvas$Canvas$rect,
+										_Utils_Tuple2(0, 0),
+										canvasSize_,
+										canvasSize_)
+									]))
+							]);
+				}
+			case 'Loading':
+				return _List_Nil;
+			default:
+				return _List_Nil;
+		}
+	});
+var $author$project$ImageCurator$canvasRenderImage = F5(
+	function (canvasSize_, left, top, size, model) {
+		var width = model.currentTextureProperties.width;
+		var scale_ = canvasSize_ / size;
+		var topShift = top * scale_;
+		var leftShift = left * scale_;
+		var height = model.currentTextureProperties.height;
+		var _v0 = model.currentTexture;
+		switch (_v0.$) {
+			case 'Loaded':
+				var texture_ = _v0.a;
+				return A3(
+					$joakin$elm_canvas$Canvas$texture,
+					_List_fromArray(
+						[
+							$joakin$elm_canvas$Canvas$Settings$Advanced$transform(
+							_List_fromArray(
+								[
+									A2($joakin$elm_canvas$Canvas$Settings$Advanced$translate, leftShift, topShift),
+									A2($joakin$elm_canvas$Canvas$Settings$Advanced$scale, scale_, scale_)
+								]))
+						]),
+					_Utils_Tuple2(0, 0),
+					texture_);
+			case 'Loading':
+				return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
+			default:
+				return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
+		}
+	});
+var $author$project$ImageCurator$previewSize = 256;
+var $author$project$ImageCurator$canvasRenderPreview = function (model) {
+	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	var leftShift = -currentImage.cropLeft;
+	var size = currentImage.cropSize;
+	var topShift = -currentImage.cropTop;
+	return _Utils_ap(
+		A2(
+			$elm$core$List$cons,
+			$author$project$ImageCurator$canvasClearScreen,
+			A6($author$project$ImageCurator$canvasRenderExtend, 1.0, $author$project$ImageCurator$previewSize, leftShift, topShift, size, model)),
+		_List_fromArray(
+			[
+				A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$previewSize, leftShift, topShift, size, model)
+			]));
 };
 var $elm$html$Html$canvas = _VirtualDom_node('canvas');
 var $joakin$elm_canvas$Canvas$cnvs = A2($elm$html$Html$canvas, _List_Nil, _List_Nil);
@@ -8567,13 +8562,75 @@ var $joakin$elm_canvas$Canvas$toHtmlWith = F3(
 				_Utils_Tuple2('__canvas', $joakin$elm_canvas$Canvas$cnvs),
 				A2($elm$core$List$map, $joakin$elm_canvas$Canvas$renderTextureSource, options.textures)));
 	});
+var $author$project$ImageCurator$viewCropPreview = function (model) {
+	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('panel crop-preview')
+			]),
+		_List_fromArray(
+			[
+				A3(
+				$joakin$elm_canvas$Canvas$toHtmlWith,
+				{
+					height: $author$project$ImageCurator$previewSize,
+					textures: _List_fromArray(
+						[model.currentTextureSource]),
+					width: $author$project$ImageCurator$previewSize
+				},
+				_List_Nil,
+				$author$project$ImageCurator$canvasRenderPreview(model))
+			]));
+};
+var $avh4$elm_color$Color$red = A4($avh4$elm_color$Color$RgbaSpace, 204 / 255, 0 / 255, 0 / 255, 1.0);
+var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingDrawOp(
+		$joakin$elm_canvas$Canvas$Internal$Canvas$Stroke(color));
+};
+var $author$project$ImageCurator$canvasRenderCrop = function (model) {
+	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
+	var cropTop = (model.currentTextureProperties.topOffset + currentImage.cropTop) * model.currentTextureProperties.scale;
+	var cropSize = currentImage.cropSize * model.currentTextureProperties.scale;
+	var cropLeft = (model.currentTextureProperties.leftOffset + currentImage.cropLeft) * model.currentTextureProperties.scale;
+	return A2(
+		$joakin$elm_canvas$Canvas$shapes,
+		_List_fromArray(
+			[
+				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red)
+			]),
+		_List_fromArray(
+			[
+				A3(
+				$joakin$elm_canvas$Canvas$rect,
+				_Utils_Tuple2(cropLeft, cropTop),
+				cropSize,
+				cropSize)
+			]));
+};
+var $author$project$ImageCurator$canvasRenderFullSize = function (model) {
+	var topShift = model.currentTextureProperties.topOffset;
+	var size = A2($elm$core$Basics$max, model.currentTextureProperties.width, model.currentTextureProperties.height);
+	var leftShift = model.currentTextureProperties.leftOffset;
+	return _Utils_ap(
+		A2(
+			$elm$core$List$cons,
+			$author$project$ImageCurator$canvasClearScreen,
+			A6($author$project$ImageCurator$canvasRenderExtend, 0.5, $author$project$ImageCurator$canvasSize, leftShift, topShift, size, model)),
+		_List_fromArray(
+			[
+				A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$canvasSize, leftShift, topShift, size, model),
+				$author$project$ImageCurator$canvasRenderCrop(model)
+			]));
+};
 var $author$project$ImageCurator$viewImageViewer = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('image-viewer')
+				$elm$html$Html$Attributes$class('panel image-viewer')
 			]),
 		_List_fromArray(
 			[
@@ -8586,16 +8643,7 @@ var $author$project$ImageCurator$viewImageViewer = function (model) {
 					width: $author$project$ImageCurator$canvasSize
 				},
 				_List_Nil,
-				_Utils_ap(
-					A2(
-						$elm$core$List$cons,
-						$author$project$ImageCurator$canvasClearScreen,
-						$author$project$ImageCurator$canvasRenderExtend(model)),
-					_List_fromArray(
-						[
-							$author$project$ImageCurator$canvasRenderImage(model),
-							$author$project$ImageCurator$canvasRenderCrop(model)
-						])))
+				$author$project$ImageCurator$canvasRenderFullSize(model))
 			]));
 };
 var $author$project$ImageCurator$SaveProperties = {$: 'SaveProperties'};
@@ -8899,7 +8947,7 @@ var $author$project$ImageCurator$viewProperties = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('properties')
+				$elm$html$Html$Attributes$class('panel properties')
 			]),
 		_List_fromArray(
 			[
@@ -9068,7 +9116,17 @@ var $author$project$ImageCurator$viewWorkspace = function (model) {
 			]),
 		_List_fromArray(
 			[
-				$author$project$ImageCurator$viewProperties(model),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('left-panel')
+					]),
+				_List_fromArray(
+					[
+						$author$project$ImageCurator$viewProperties(model),
+						$author$project$ImageCurator$viewCropPreview(model)
+					])),
 				$author$project$ImageCurator$viewImageViewer(model)
 			]));
 };
