@@ -1,5 +1,5 @@
 # Image Curator
-Image Curator is a web app designed to quickly sort and edit image datasets. I created it after being frustrated with curating a large dataset for training a GAN. Just with my limited testing, I have been able to process 300+ images per hour, including setting custom crop regions for every image.
+Image Curator is a web app designed to quickly sort and edit image datasets. I created it after being frustrated with curating a large dataset for training a GAN. With my limited testing, I have been able to process 300+ images per hour, including setting custom crop regions for every image.
 
 ## Features
 - Approve/reject images
