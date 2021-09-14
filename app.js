@@ -7873,6 +7873,64 @@ var $author$project$ImageCurator$canvasRenderImage = F5(
 				return A2($joakin$elm_canvas$Canvas$shapes, _List_Nil, _List_Nil);
 		}
 	});
+var $joakin$elm_canvas$Canvas$Internal$Canvas$LineTo = function (a) {
+	return {$: 'LineTo', a: a};
+};
+var $joakin$elm_canvas$Canvas$lineTo = function (point) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$LineTo(point);
+};
+var $joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$lineWidth = function (value) {
+	return A2(
+		$joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$field,
+		'lineWidth',
+		$elm$json$Json$Encode$float(value));
+};
+var $joakin$elm_canvas$Canvas$Settings$Line$lineWidth = function (width) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingCommand(
+		$joakin$elm_canvas$Canvas$Internal$CustomElementJsonApi$lineWidth(width));
+};
+var $joakin$elm_canvas$Canvas$Internal$Canvas$Path = F2(
+	function (a, b) {
+		return {$: 'Path', a: a, b: b};
+	});
+var $joakin$elm_canvas$Canvas$path = F2(
+	function (startingPoint, segments) {
+		return A2($joakin$elm_canvas$Canvas$Internal$Canvas$Path, startingPoint, segments);
+	});
+var $avh4$elm_color$Color$red = A4($avh4$elm_color$Color$RgbaSpace, 204 / 255, 0 / 255, 0 / 255, 1.0);
+var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
+	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingDrawOp(
+		$joakin$elm_canvas$Canvas$Internal$Canvas$Stroke(color));
+};
+var $author$project$ImageCurator$canvasRenderX = function (canvasSize_) {
+	var canvasSizeFloat = canvasSize_;
+	return A2(
+		$joakin$elm_canvas$Canvas$shapes,
+		_List_fromArray(
+			[
+				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red),
+				$joakin$elm_canvas$Canvas$Settings$Line$lineWidth(4)
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$joakin$elm_canvas$Canvas$path,
+				_Utils_Tuple2(0, 0),
+				_List_fromArray(
+					[
+						$joakin$elm_canvas$Canvas$lineTo(
+						_Utils_Tuple2(canvasSizeFloat, canvasSizeFloat))
+					])),
+				A2(
+				$joakin$elm_canvas$Canvas$path,
+				_Utils_Tuple2(canvasSizeFloat, 0),
+				_List_fromArray(
+					[
+						$joakin$elm_canvas$Canvas$lineTo(
+						_Utils_Tuple2(0, canvasSizeFloat))
+					]))
+			]));
+};
 var $author$project$ImageCurator$previewSize = 256;
 var $author$project$ImageCurator$canvasRenderPreview = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
@@ -7884,10 +7942,15 @@ var $author$project$ImageCurator$canvasRenderPreview = function (model) {
 			$elm$core$List$cons,
 			$author$project$ImageCurator$canvasClearScreen,
 			A6($author$project$ImageCurator$canvasRenderExtend, 1.0, $author$project$ImageCurator$previewSize, leftShift, topShift, size, model)),
-		_List_fromArray(
-			[
-				A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$previewSize, leftShift, topShift, size, model)
-			]));
+		_Utils_ap(
+			_List_fromArray(
+				[
+					A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$previewSize, leftShift, topShift, size, model)
+				]),
+			currentImage.approved ? _List_Nil : _List_fromArray(
+				[
+					$author$project$ImageCurator$canvasRenderX($author$project$ImageCurator$previewSize)
+				])));
 };
 var $elm$html$Html$canvas = _VirtualDom_node('canvas');
 var $joakin$elm_canvas$Canvas$cnvs = A2($elm$html$Html$canvas, _List_Nil, _List_Nil);
@@ -8584,11 +8647,6 @@ var $author$project$ImageCurator$viewCropPreview = function (model) {
 				$author$project$ImageCurator$canvasRenderPreview(model))
 			]));
 };
-var $avh4$elm_color$Color$red = A4($avh4$elm_color$Color$RgbaSpace, 204 / 255, 0 / 255, 0 / 255, 1.0);
-var $joakin$elm_canvas$Canvas$Settings$stroke = function (color) {
-	return $joakin$elm_canvas$Canvas$Internal$Canvas$SettingDrawOp(
-		$joakin$elm_canvas$Canvas$Internal$Canvas$Stroke(color));
-};
 var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);
 	var cropTop = (model.currentTextureProperties.topOffset + currentImage.cropTop) * model.currentTextureProperties.scale;
@@ -8598,7 +8656,8 @@ var $author$project$ImageCurator$canvasRenderCrop = function (model) {
 		$joakin$elm_canvas$Canvas$shapes,
 		_List_fromArray(
 			[
-				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red)
+				$joakin$elm_canvas$Canvas$Settings$stroke($avh4$elm_color$Color$red),
+				$joakin$elm_canvas$Canvas$Settings$Line$lineWidth(2)
 			]),
 		_List_fromArray(
 			[
@@ -8618,11 +8677,15 @@ var $author$project$ImageCurator$canvasRenderFullSize = function (model) {
 			$elm$core$List$cons,
 			$author$project$ImageCurator$canvasClearScreen,
 			A6($author$project$ImageCurator$canvasRenderExtend, 0.5, $author$project$ImageCurator$canvasSize, leftShift, topShift, size, model)),
-		_List_fromArray(
-			[
-				A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$canvasSize, leftShift, topShift, size, model),
-				$author$project$ImageCurator$canvasRenderCrop(model)
-			]));
+		_Utils_ap(
+			_List_fromArray(
+				[
+					A5($author$project$ImageCurator$canvasRenderImage, $author$project$ImageCurator$canvasSize, leftShift, topShift, size, model)
+				]),
+			_List_fromArray(
+				[
+					$author$project$ImageCurator$canvasRenderCrop(model)
+				])));
 };
 var $author$project$ImageCurator$viewImageViewer = function (model) {
 	var currentImage = $author$project$ImageCurator$getCurrentImage(model);

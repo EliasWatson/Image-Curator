@@ -42,8 +42,11 @@ body {
 }
 
 .workspace .properties .filename {
+	max-width: 10vw;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	text-align: center;
-	text-overflow: clip;
 	font-style: italic;
 	margin-bottom: 10px;
 }

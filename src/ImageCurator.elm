@@ -17,9 +17,10 @@ import Json.Encode
 import Json.Decode exposing (Decoder, int, array, string, bool, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 
-import Canvas exposing (rect, shapes, texture)
+import Canvas exposing (rect, shapes, texture, path, lineTo)
 import Canvas.Texture as Texture exposing (Texture)
 import Canvas.Settings exposing (fill, stroke)
+import Canvas.Settings.Line exposing (lineWidth)
 import Canvas.Settings.Advanced exposing (rotate, transform, translate, scale, alpha)
 import Color
 
@@ -211,8 +212,10 @@ canvasRenderFullSize model =
         topShift = model.currentTextureProperties.topOffset
         size = max model.currentTextureProperties.width model.currentTextureProperties.height
     in 
-    ( ( canvasClearScreen :: canvasRenderExtend 0.5 canvasSize leftShift topShift size model )
-    ++ [ canvasRenderImage canvasSize leftShift topShift size model, canvasRenderCrop model ]
+    (( canvasClearScreen
+    :: canvasRenderExtend 0.5 canvasSize leftShift topShift size model )
+    ++ [ canvasRenderImage canvasSize leftShift topShift size model ]
+    ++ [ canvasRenderCrop model ]
     )
 
 canvasRenderPreview : Model -> List Canvas.Renderable
@@ -223,8 +226,10 @@ canvasRenderPreview model =
         topShift = negate currentImage.cropTop
         size = currentImage.cropSize
     in 
-    ( ( canvasClearScreen :: canvasRenderExtend 1.0 previewSize leftShift topShift size model )
+    (( canvasClearScreen
+    :: canvasRenderExtend 1.0 previewSize leftShift topShift size model )
     ++ [ canvasRenderImage previewSize leftShift topShift size model ]
+    ++ ( if currentImage.approved then [] else [ canvasRenderX previewSize ] )
     )
 
 canvasClearScreen : Canvas.Renderable
@@ -344,7 +349,24 @@ canvasRenderCrop model =
             * model.currentTextureProperties.scale
         cropSize = toFloat currentImage.cropSize * model.currentTextureProperties.scale
     in
-    shapes [ stroke Color.red ] [ rect ( cropLeft, cropTop ) cropSize cropSize ]
+    shapes
+        [ stroke Color.red
+        , lineWidth 2
+        ]
+        [ rect ( cropLeft, cropTop ) cropSize cropSize ]
+
+canvasRenderX : Int -> Canvas.Renderable
+canvasRenderX canvasSize_ =
+    let
+        canvasSizeFloat = toFloat canvasSize_
+    in
+    shapes
+        [ stroke Color.red
+        , lineWidth 4
+        ]
+        [ path ( 0, 0 ) [ lineTo ( canvasSizeFloat, canvasSizeFloat ) ]
+        , path ( canvasSizeFloat, 0 ) [ lineTo ( 0, canvasSizeFloat ) ]
+        ]
 
 viewButton : List String -> Msg -> Html Msg -> Html Msg
 viewButton classes msg content =
