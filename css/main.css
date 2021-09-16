@@ -41,6 +41,10 @@ body {
 	margin-bottom: 5px;
 }
 
+.workspace .properties div:last-of-type {
+	margin-bottom: 0px;
+}
+
 .workspace .properties .filename {
 	max-width: 10vw;
 	white-space: nowrap;
@@ -72,13 +76,28 @@ body {
 	justify-content: center;
 }
 
-.workspace .properties .navbar input {
-	margin: 0 5px;
+.workspace .properties .navbar input,
+.workspace .properties .navbar .button {
+	margin-right: 5px;
 	text-align: center;
+}
+
+.workspace .properties .navbar .button:last-of-type {
+	margin-right: 0px;
+}
+
+.workspace .properties .navbar input {
+	width: 0;
+	flex: 1;
 }
 
 .workspace .crop-preview {
 	margin-top: 5px;
+}
+
+.workspace .crop-preview canvas {
+	width: 100% !important;
+	height: auto !important;
 }
 
 .workspace .image-viewer {

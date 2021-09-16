@@ -6,6 +6,7 @@ Image Curator is a web app designed to quickly sort and edit image datasets. I c
 - Set crop region
 - Set mode to fill in empty space in non-square images
 - Preview cropped region
+- Skip to first unprocessed image
 - Everything can be controlled with hotkeys, no mouse needed
 
 ## Screenshots
@@ -41,8 +42,6 @@ Hotkeys are a major feature of Image Curator. They allow you to process images v
 ## Planned Features
 - Drag to set crop region
 - Python script to generate output dataset
-- Navigation buttons to go to first/last images
-- Navigation button to skip to first unprocessed image
 - Image tagging
 - Tag regions on image
 

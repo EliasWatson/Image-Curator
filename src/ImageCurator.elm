@@ -41,6 +41,10 @@ type Msg
     | SetCurrentImageStr String
     | PrevImage
     | NextImage
+    | PrevUnprocessedImage
+    | NextUnprocessedImage
+    | FirstImage
+    | LastImage
     | ToggleProcessed
     | ToggleApproved
     | SetCropLeft String
@@ -105,14 +109,18 @@ view model =
 viewNavigationBar : Model -> Html Msg
 viewNavigationBar model =
     div [ class "navbar" ] 
-        [ viewButton [] PrevImage (i [ class "fas fa-backward" ] [])
+        [ viewButton [] FirstImage (i [ class "fas fa-step-backward" ] [])
+        , viewButton [] PrevUnprocessedImage (i [ class "fas fa-backward" ] [])
+        , viewButton [] PrevImage (i [ class "fas fa-chevron-left" ] [])
         , input
             [ type_ "number", placeholder "Image Index"
             , value (String.fromInt (model.currentImageIndex + 1))
             , onInput SetCurrentImageStr
             , stopKeyPropagation
             ] []
-        , viewButton [] NextImage (i [ class "fas fa-forward" ] [])
+        , viewButton [] NextImage (i [ class "fas fa-chevron-right" ] [])
+        , viewButton [] NextUnprocessedImage (i [ class "fas fa-forward" ] [])
+        , viewButton [] LastImage (i [ class "fas fa-step-forward" ] [])
         ]
 
 viewWorkspace : Model -> Html Msg
@@ -444,8 +452,44 @@ update msg model =
                 )
             , updateDatabase currentImage
             )
-        PrevImage -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex - 1), updateDatabase currentImage )
-        NextImage -> ( updateCurrentImageProcessed <| updateCurrentImage model (model.currentImageIndex + 1), updateDatabase currentImage )
+        PrevImage ->
+            ( updateCurrentImageProcessed
+                <| updateCurrentImage model (model.currentImageIndex - 1)
+            , updateDatabase currentImage
+            )
+        NextImage ->
+            ( updateCurrentImageProcessed
+                <| updateCurrentImage model (model.currentImageIndex + 1)
+            , updateDatabase currentImage
+            )
+        PrevUnprocessedImage ->
+            case model.status of
+                Loaded images ->
+                    ( updateCurrentImageProcessed
+                        <| updateCurrentImage model (getUnprocessedImage images -1 model.currentImageIndex)
+                    , updateDatabase currentImage
+                    )
+                Loading -> ( model, Cmd.none )
+                Errored _ -> ( model, Cmd.none )
+        NextUnprocessedImage ->
+            case model.status of
+                Loaded images ->
+                    ( updateCurrentImageProcessed
+                        <| updateCurrentImage model (getUnprocessedImage images 1 model.currentImageIndex)
+                    , updateDatabase currentImage
+                    )
+                Loading -> ( model, Cmd.none )
+                Errored _ -> ( model, Cmd.none )
+        FirstImage ->
+            ( updateCurrentImageProcessed
+                <| updateCurrentImage model 0
+            , updateDatabase currentImage
+            )
+        LastImage ->
+            case model.status of
+                Loaded images -> ( updateCurrentImageProcessed <| updateCurrentImage model ((Array.length images) - 1), updateDatabase currentImage )
+                Loading -> ( model, Cmd.none )
+                Errored _ -> ( model, Cmd.none )
         ToggleApproved ->
             ( updateCurrentImageProperties
                 model
@@ -630,6 +674,15 @@ getCurrentImage model =
                 <| Array.get model.currentImageIndex images
         Loading -> emptyImage
         Errored _ -> emptyImage
+
+getUnprocessedImage : Array Image -> Int -> Int -> Int
+getUnprocessedImage images dir pos =
+    case Array.get pos images of
+        Just image ->
+            if not image.processed
+            then pos
+            else getUnprocessedImage images dir (pos + dir)
+        Nothing -> pos - dir    --This isn't the best solution. It could cause issues with 0-length arrays
 
 getNextExtendMode : ExtendMode -> ExtendMode
 getNextExtendMode mode =
