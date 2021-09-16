@@ -33,7 +33,8 @@ for filename, metadata in db.items():
 	crop_left = metadata["crop_left"]
 	crop_top = metadata["crop_top"]
 	crop_size = metadata["crop_size"]
-	img = crop_and_pad_image(img_path, crop_left, crop_top, crop_size)
+	crop_extend = metadata["crop_extend"]
+	img = crop_and_pad_image(img_path, crop_left, crop_top, crop_size, crop_extend)
 
 	out_path = os.path.join(args.outdir, filename)
 	img.save(out_path)
