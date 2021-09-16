@@ -8,6 +8,7 @@ Image Curator is a web app designed to quickly sort and edit image datasets. I c
 - Preview cropped region
 - Skip to first unprocessed image
 - Everything can be controlled with hotkeys, no mouse needed
+- Script to output final dataset, including crops
 
 ## Screenshots
 ![](readme-images/example_1.jpg)
@@ -41,12 +42,12 @@ Hotkeys are a major feature of Image Curator. They allow you to process images v
 
 ## Planned Features
 - Drag to set crop region
-- Python script to generate output dataset
 - Image tagging
 - Tag regions on image
 
 ## Known Issues
 - Stretch extend mode doesn't display correctly in the preview
+- Dataset generator doesn't handle mirror & stretch extend modes
 
 ## Disclaimer
 I am still very new to Elm. I wrote this app in a single weekend after only reading the first 4 chapters of "Elm in Action". I only barely know what I'm doing. I am confident that there are parts of this app that are very poorly designed, I just don't have experience yet to know what those parts are. Feel free to file issues or pull requests if you want to critique anything.
